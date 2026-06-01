@@ -34,7 +34,8 @@
     "publish": {
       "provider": "github",
       "owner": "Xh3ll",
-      "repo": "html-builder"
+      "repo": "html-builder",
+      "releaseType": "release"
     },
     "directories": { "output": "dist" }
   }
