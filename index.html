@@ -112,6 +112,7 @@ body {
   transition: opacity 0.4s;
   white-space: nowrap;
   pointer-events: none;
+  min-width: 130px;
 }
 
 /* ─── UPDATE BAR ─── */
@@ -1210,7 +1211,8 @@ function updateProp(prop, value) {
   else if (prop === 'table-summary')   { el.attrs = el.attrs||{}; el.attrs.summary = value; }
   else if (prop === 'table-caption')   { el.caption = value; }
   else if (prop === 'table-useHeader') { el.useHeader = value; }
-  else if (prop === 'header-bg')       { el.headerStyle = el.headerStyle||{}; el.headerStyle['background-color'] = value; }
+  else if (prop === 'header-bg')        { el.headerStyle = el.headerStyle||{}; el.headerStyle['background-color'] = value; }
+  else if (prop === 'header-color')    { el.headerStyle = el.headerStyle||{}; if (value) el.headerStyle['color'] = value; else delete (el.headerStyle||{})['color']; }
   else if (prop === 'width-style')     { el.styles = el.styles||{}; el.styles.width = value; }
   else if (['src','alt','width','height','wrapAlign'].includes(prop)) {
     el.attrs[prop] = value;
@@ -1648,6 +1650,14 @@ function buildPropsHTML(el) {
           placeholder="rgb(51,51,51)"
           oninput="updateProp('header-bg',this.value)">
       </div>`);
+    html += propRow('header-color', 'Kopfzeilen-Textfarbe',
+      `<div class="prop-row-color">
+        <input class="prop-color-swatch" type="color" value="${esc(hs['color']||'#ffffff')}"
+          oninput="updateProp('header-color',this.value)">
+        <input class="prop-input" type="text" value="${esc(hs['color']||'')}"
+          placeholder="leer = Standard"
+          oninput="updateProp('header-color',this.value)">
+      </div>`);
     html += propRow('summary', 'Zusammenfassung (summary)',
       `<input class="prop-input" type="text" value="${esc(a.summary||'')}"
         placeholder="Kurze Beschreibung für Screenreader"
@@ -1817,12 +1827,11 @@ function generateHTML(el, indent) {
           cols.forEach((_, ci) => {
             if (coverage[`${ri},${ci}`]) return; // spanned by another cell — skip
             const c = normalizeCell(row && row[ci]);
-            const cellStyleParts = ['text-align:center'];
             const cStyles = buildStyleStr(c.styles || {});
-            if (cStyles) cellStyleParts.push(cStyles);
+            const styleAttr = cStyles ? ` style="${cStyles}"` : '';
             const colspanAttr = c.colspan > 1 ? ` colspan="${c.colspan}"` : '';
             const rowspanAttr = c.rowspan > 1 ? ` rowspan="${c.rowspan}"` : '';
-            parts.push(`${i4}<td style="${cellStyleParts.join('; ')}"${colspanAttr}${rowspanAttr}>${c.content}</td>`);
+            parts.push(`${i4}<td${styleAttr}${colspanAttr}${rowspanAttr}>${c.content}</td>`);
           });
           parts.push(`${i3}</tr>`);
         });
@@ -2796,6 +2805,14 @@ function domToEl(node) {
         el.useHeader = true;
         el.columns = Array.from(theadThs).map(th => th.textContent.trim());
         const firstThStyle = parseStyleStr(theadThs[0].getAttribute('style') || '');
+        // Also pick up text color from an inline span inside <th> if not on th itself
+        if (!firstThStyle['color']) {
+          const colorSpan = theadThs[0].querySelector('span[style*="color"]');
+          if (colorSpan) {
+            const spanStyle = parseStyleStr(colorSpan.getAttribute('style') || '');
+            if (spanStyle['color']) firstThStyle['color'] = spanStyle['color'];
+          }
+        }
         if (Object.keys(firstThStyle).length) el.headerStyle = firstThStyle;
       } else {
         // No thead — detect columns from first body row
@@ -2823,8 +2840,6 @@ function domToEl(node) {
           const cs = parseInt(td.getAttribute('colspan')) || 1;
           const rs = parseInt(td.getAttribute('rowspan')) || 1;
           const tdStyles = parseStyleStr(td.getAttribute('style') || '');
-          // Exclude text-align:center from per-cell styles (it's the default)
-          if (tdStyles['text-align'] === 'center') delete tdStyles['text-align'];
           return {
             content: td.innerHTML.trim(),
             colspan: cs,
