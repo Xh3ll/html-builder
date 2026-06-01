@@ -75,6 +75,7 @@ body {
   color: var(--text);
 }
 .app-title em { color: var(--accent2); font-style: normal; }
+.app-version { font-size: 10px; font-weight: 400; color: var(--text-dim); letter-spacing: 0; margin-left: 4px; }
 
 .header-actions { display: flex; gap: 8px; align-items: center; }
 
@@ -808,7 +809,7 @@ body.drag-active .el-block:not(.dragging):hover {
 
 <!-- HEADER -->
 <header class="app-header">
-  <div class="app-title">🔨 <em>HTML</em> Builder</div>
+  <div class="app-title">🔨 <em>HTML</em> Builder<span class="app-version" id="app-version"></span></div>
   <div class="header-actions">
     <button class="btn btn-ghost" onclick="loadProject()" title="Projekt öffnen">📂 Laden</button>
     <button class="btn btn-ghost" onclick="saveProject()" title="Projekt speichern (Strg+S)">💾 Speichern</button>
@@ -3072,6 +3073,13 @@ function handleUpdateBtn() {
 renderAll();
 initProjectSystem();
 initUpdater();
+
+if (window.electronAPI?.isElectron) {
+  window.electronAPI.getVersion().then(v => {
+    const el = document.getElementById('app-version');
+    if (el) el.textContent = `v${v}`;
+  });
+}
 </script>
 </body>
 </html>

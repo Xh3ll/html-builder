@@ -82,7 +82,8 @@ ipcMain.handle('fs:readFile', async (_e, filePath) => ({
   content: await require('fs').promises.readFile(filePath, 'utf8'),
 }));
 
-ipcMain.handle('app:getDataPath', () => app.getPath('userData'));
+ipcMain.handle('app:getDataPath',  () => app.getPath('userData'));
+ipcMain.handle('app:getVersion',   () => app.getVersion());
 
 ipcMain.handle('dialog:question', async (_e, title, message, buttons) => {
   const { response } = await dialog.showMessageBox(mainWindow, {

@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   writeFile:    (path, content)   => ipcRenderer.invoke('fs:writeFile', path, content),
   readFile:     (path)            => ipcRenderer.invoke('fs:readFile', path),
   getDataPath:  ()                => ipcRenderer.invoke('app:getDataPath'),
+  getVersion:   ()                => ipcRenderer.invoke('app:getVersion'),
   showQuestion: (title, msg, btns) => ipcRenderer.invoke('dialog:question', title, msg, btns),
 
   // Auto-updater
