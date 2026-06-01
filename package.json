@@ -1,6 +1,6 @@
 {
   "name": "html-builder",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Visueller HTML-Code-Generator",
   "main": "main.js",
   "author": "Xhell",

@@ -2982,6 +2982,9 @@ async function initProjectSystem() {
         updateContextBar();
         renderAll();
         updateSaveStatus('↺ Wiederhergestellt');
+      } else {
+        // Verworfen — Autosave löschen damit der Dialog nicht nochmal erscheint
+        await window.electronAPI.writeFile(autosavePath, JSON.stringify({ elements: [] }));
       }
     }
   } catch(e) { /* kein Autosave vorhanden */ }
