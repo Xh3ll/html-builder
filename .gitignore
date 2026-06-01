@@ -1,2 +1,7 @@
 node_modules/
 dist/
+index.html
+main.js
+preload.js
+package.json
+CLAUDE.md
