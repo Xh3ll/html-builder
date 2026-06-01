@@ -35,6 +35,7 @@
   --c-badge: #f97316;
   --c-ul:    #06b6d4;
   --c-ol:    #ec4899;
+  --c-link:  #34d399;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -283,6 +284,7 @@ body {
 .pal-btn.type-badge:hover { border-color: var(--c-badge); color: #fdba74; }
 .pal-btn.type-ul:hover    { border-color: var(--c-ul);    color: #67e8f9; }
 .pal-btn.type-ol:hover    { border-color: var(--c-ol);    color: #f9a8d4; }
+.pal-btn.type-link:hover  { border-color: var(--c-link);  color: #6ee7b7; }
 
 /* Divider */
 .divider {
@@ -475,6 +477,10 @@ body {
 .el-block.type-ol .el-head { background: rgba(236,72,153,0.14); border-color: rgba(236,72,153,0.15); }
 .el-block.type-ol .el-type-badge { background: rgba(236,72,153,0.25); color: #f9a8d4; }
 .el-block.type-ol.selected { box-shadow: 0 0 0 2px var(--c-ol), 0 4px 20px rgba(236,72,153,0.2); }
+.el-block.type-link { border-color: rgba(52,211,153,0.35); }
+.el-block.type-link .el-head { background: rgba(52,211,153,0.10); border-color: rgba(52,211,153,0.15); }
+.el-block.type-link .el-type-badge { background: rgba(52,211,153,0.20); color: #6ee7b7; }
+.el-block.type-link.selected { box-shadow: 0 0 0 2px var(--c-link), 0 4px 20px rgba(52,211,153,0.2); }
 
 .el-head {
   display: flex;
@@ -526,6 +532,7 @@ body {
 }
 .el-btn:hover { background: rgba(255,255,255,0.12); color: var(--text); }
 .el-btn.del:hover { background: rgba(233,69,96,0.25); color: var(--danger); border-color: rgba(233,69,96,0.3); }
+.el-btn.dup:hover { background: rgba(52,211,153,0.15); color: #6ee7b7; border-color: rgba(52,211,153,0.3); }
 
 .el-body { padding: 7px 10px; }
 .el-preview {
@@ -811,6 +818,9 @@ body.drag-active .el-block:not(.dragging):hover {
 <header class="app-header">
   <div class="app-title">🔨 <em>HTML</em> Builder<span class="app-version" id="app-version"></span></div>
   <div class="header-actions">
+    <button class="btn btn-ghost" onclick="undo()" title="Rückgängig (Strg+Z)">↩</button>
+    <button class="btn btn-ghost" onclick="redo()" title="Wiederholen (Strg+Y)">↪</button>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 2px"></div>
     <button class="btn btn-ghost" onclick="loadProject()" title="Projekt öffnen">📂 Laden</button>
     <button class="btn btn-ghost" onclick="saveProject()" title="Projekt speichern (Strg+S)">💾 Speichern</button>
     <span id="save-status" class="save-status"></span>
@@ -875,6 +885,9 @@ body.drag-active .el-block:not(.dragging):hover {
         </button>
         <button class="pal-btn type-ol" onclick="addElement('ol')" title="Nummerierte Liste (ol)">
           <span class="pal-icon">1≡</span><span>Num.-Liste</span>
+        </button>
+        <button class="pal-btn type-link" onclick="addElement('link')" title="Hyperlink (a)">
+          <span class="pal-icon">🔗</span><span>Link</span>
         </button>
       </div>
 
@@ -1004,6 +1017,60 @@ let autosavePath    = null;
 let _firstRender    = true;
 const _canvasEmpty  = document.getElementById('canvas-empty');
 
+let _history          = [];
+let _future           = [];
+const _MAX_HISTORY    = 50;
+let _histLastProp     = null;
+let _histLastPropTime = 0;
+
+function pushHistory() {
+  _history.push(JSON.stringify(elements));
+  if (_history.length > _MAX_HISTORY) _history.shift();
+  _future = [];
+  _histLastProp = null;
+}
+
+function undo() {
+  if (!_history.length) return;
+  _future.push(JSON.stringify(elements));
+  if (_future.length > _MAX_HISTORY) _future.shift();
+  elements = JSON.parse(_history.pop());
+  selectedId = null; contextId = null;
+  updateContextBar(); renderAll();
+}
+
+function redo() {
+  if (!_future.length) return;
+  _history.push(JSON.stringify(elements));
+  if (_history.length > _MAX_HISTORY) _history.shift();
+  elements = JSON.parse(_future.pop());
+  selectedId = null; contextId = null;
+  updateContextBar(); renderAll();
+}
+
+function duplicateElement(id) {
+  pushHistory();
+  function reId(e) {
+    e.id = 'el-' + (++idCounter);
+    if (e.children) e.children.forEach(reId);
+    return e;
+  }
+  function findAndDup(arr) {
+    for (let i = 0; i < arr.length; i++) {
+      if (arr[i].id === id) {
+        const clone = reId(JSON.parse(JSON.stringify(arr[i])));
+        arr.splice(i + 1, 0, clone);
+        selectedId = clone.id;
+        renderAll();
+        return true;
+      }
+      if (arr[i].children && findAndDup(arr[i].children)) return true;
+    }
+    return false;
+  }
+  findAndDup(elements);
+}
+
 // ══════════════════════════════════════════════
 //  DEFAULTS
 // ══════════════════════════════════════════════
@@ -1073,6 +1140,12 @@ function makeElement(type) {
     case 'ol':
       return { ...base,
         content: 'Erster Schritt\nZweiter Schritt\nDritter Schritt',
+        styles: {}
+      };
+    case 'link':
+      return { ...base,
+        content: 'Link-Text',
+        attrs: { href: '', target: '_blank' },
         styles: {}
       };
     default:
@@ -1153,6 +1226,7 @@ function removeElement(id, tree) {
 //  ACTIONS
 // ══════════════════════════════════════════════
 function addElement(type) {
+  pushHistory();
   const el = makeElement(type);
   if (contextId) {
     const parent = findElement(contextId);
@@ -1171,6 +1245,7 @@ function selectElement(id) {
 }
 
 function deleteElement(id) {
+  pushHistory();
   if (selectedId === id) selectedId = null;
   if (contextId === id) { contextId = null; updateContextBar(); }
   removeElement(id);
@@ -1178,6 +1253,7 @@ function deleteElement(id) {
 }
 
 function moveElement(id, dir) {
+  pushHistory();
   const sibs = getSiblings(id);
   if (!sibs) return;
   const i = sibs.findIndex(e => e.id === id);
@@ -1204,6 +1280,9 @@ function updateProp(prop, value) {
   if (!selectedId) return;
   const el = findElement(selectedId);
   if (!el) return;
+  const now = Date.now();
+  if (prop !== _histLastProp || now - _histLastPropTime > 1500) pushHistory();
+  _histLastProp = prop; _histLastPropTime = now;
   if (prop === 'content')       { el.content = value; }
   else if (prop === 'level')    { el.level = parseInt(value); }
   else if (prop === 'badge-color')     { el.attrs = el.attrs||{}; el.attrs.color = value; }
@@ -1215,7 +1294,7 @@ function updateProp(prop, value) {
   else if (prop === 'header-bg')        { el.headerStyle = el.headerStyle||{}; el.headerStyle['background-color'] = value; }
   else if (prop === 'header-color')    { el.headerStyle = el.headerStyle||{}; if (value) el.headerStyle['color'] = value; else delete (el.headerStyle||{})['color']; }
   else if (prop === 'width-style')     { el.styles = el.styles||{}; el.styles.width = value; }
-  else if (['src','alt','width','height','wrapAlign'].includes(prop)) {
+  else if (['src','alt','width','height','wrapAlign','href','target'].includes(prop)) {
     el.attrs[prop] = value;
   } else {
     if (value === '' || value === null || value === undefined) {
@@ -1233,6 +1312,7 @@ function updateProp(prop, value) {
 function clearAll() {
   if (!elements.length) return;
   if (!confirm('Alle Elemente löschen?')) return;
+  pushHistory();
   elements = [];
   currentFilePath = null;
   selectedId = null;
@@ -1310,6 +1390,7 @@ function renderBlock(el) {
     case 'badge': typeLabel = 'ABZEICHEN';  tagName = '&lt;div&gt;'; break;
     case 'ul':    typeLabel = 'LISTE';      tagName = '&lt;ul&gt;'; break;
     case 'ol':    typeLabel = 'NUM.LISTE';  tagName = '&lt;ol&gt;'; break;
+    case 'link':  typeLabel = 'LINK';       tagName = '&lt;a&gt;'; break;
   }
 
   // Content preview
@@ -1371,6 +1452,16 @@ function renderBlock(el) {
       preview = `<span class="el-preview">${items.length} Einträge${first ? ': ' + first + (items[0].length > 45 ? '…' : '') : ''}</span>`;
       break;
     }
+    case 'link': {
+      const href = el.attrs?.href || '';
+      const txt  = esc((el.content||'').replace(/<[^>]+>/g,'').slice(0,35));
+      preview = `<span class="el-preview" style="display:flex;align-items:center;gap:6px">
+        <span style="color:#6ee7b7">${txt||'(kein Text)'}</span>
+        <span style="color:var(--text-muted)">→</span>
+        <span style="color:var(--text-dim)">${href ? esc(href.slice(0,50)) : '(kein Ziel)'}</span>
+      </span>`;
+      break;
+    }
   }
 
   // Children area for div — uses renderElementList recursively
@@ -1406,6 +1497,7 @@ function renderBlock(el) {
         <div class="el-actions" onclick="event.stopPropagation()">
           <button class="el-btn" onclick="moveElement('${el.id}',-1)" title="Nach oben">▲</button>
           <button class="el-btn" onclick="moveElement('${el.id}',1)"  title="Nach unten">▼</button>
+          <button class="el-btn dup" onclick="duplicateElement('${el.id}')" title="Duplizieren">⧉</button>
           <button class="el-btn del" onclick="deleteElement('${el.id}')" title="Löschen">🗑</button>
         </div>
       </div>
@@ -1743,6 +1835,39 @@ function buildPropsHTML(el) {
         oninput="updateProp('margin-bottom',this.value+'px')">`);
   }
 
+  else if (el.type === 'link') {
+    html += propRow('content', 'Link-Text (HTML erlaubt)',
+      `<input class="prop-input" type="text" value="${esc(el.content||'')}"
+        placeholder="Link-Text"
+        oninput="updateProp('content',this.value)">`);
+    html += propRow('href', 'URL (href)',
+      `<input class="prop-input" type="text" value="${esc(a.href||'')}"
+        placeholder="https://..."
+        oninput="updateProp('href',this.value)">`);
+    html += propRow('target', 'Ziel (target)',
+      `<select class="prop-select" onchange="updateProp('target',this.value)">
+        <option value="_blank"${(a.target||'_blank')==='_blank'?' selected':''}>_blank — neuer Tab</option>
+        <option value="_self"${a.target==='_self'?' selected':''}>_self — gleicher Tab</option>
+      </select>`);
+    html += propRow('color', 'Linkfarbe',
+      `<div class="prop-row-color">
+        <input class="prop-color-swatch" type="color" value="${esc(s['color']||'#34d399')}"
+          oninput="updateProp('color',this.value)">
+        <input class="prop-input" type="text" value="${esc(s['color']||'')}"
+          placeholder="inherit"
+          oninput="updateProp('color',this.value)">
+      </div>`);
+    html += propRow('font-weight', 'Fett',
+      `<select class="prop-select" onchange="updateProp('font-weight',this.value)">
+        <option value=""${!s['font-weight']?' selected':''}>Normal</option>
+        <option value="bold"${s['font-weight']==='bold'?' selected':''}>Fett</option>
+      </select>`);
+    html += propRow('font-size', 'Schriftgröße (px)',
+      `<input class="prop-input" type="number" min="8" value="${parseInt(s['font-size'])||''}"
+        placeholder="inherit"
+        oninput="updateProp('font-size',this.value?this.value+'px':'')">`);
+  }
+
   return html;
 }
 
@@ -1855,6 +1980,13 @@ function generateHTML(el, indent) {
       const tc   = (el.attrs && el.attrs.color) ? el.attrs.color : '#000000';
       const txt  = el.content || '';
       return `${indent}<div${sA}>\n${indent}<p><span style="color:${tc}"><strong>${txt}</strong></span></p>\n${indent}</div>`;
+    }
+    case 'link': {
+      const href   = el.attrs?.href || '#';
+      const target = el.attrs?.target ? ` target="${esc(el.attrs.target)}"` : '';
+      const sStr   = buildStyleStr(el.styles || {});
+      const sA     = sStr ? ` style="${sStr}"` : '';
+      return `${indent}<a href="${esc(href)}"${target}${sA}>${el.content || ''}</a>`;
     }
     default:
       return '';
@@ -2318,6 +2450,7 @@ function renderCellProps() {
 
 function tblSetCellProp(prop, value) {
   if (selectedCells.length === 0 || !tableEditId) return;
+  pushHistory();
   const el = findElement(tableEditId);
   if (!el) return;
 
@@ -2515,6 +2648,7 @@ function tblUpdateCell(ri, ci, val) {
 function tblAddCol() {
   const el = findElement(tableEditId);
   if (!el) return;
+  pushHistory();
   el.columns.push('Neue Spalte');
   el.rows = el.rows.map(row => [...row, {content:'', colspan:1, rowspan:1, styles:{}}]);
   // Keep selection as-is (new column won't be in selectedCells)
@@ -2525,6 +2659,7 @@ function tblAddCol() {
 function tblRemoveCol(ci) {
   const el = findElement(tableEditId);
   if (!el || el.columns.length <= 1) return;
+  pushHistory();
   el.columns.splice(ci, 1);
   el.rows = el.rows.map(row => row.filter((_, i) => i !== ci));
   selectedCells = selectedCells.filter(c => c.ci !== ci).map(c => c.ci > ci ? {...c, ci: c.ci - 1} : c);
@@ -2536,6 +2671,7 @@ function tblRemoveCol(ci) {
 function tblAddRow() {
   const el = findElement(tableEditId);
   if (!el) return;
+  pushHistory();
   el.rows.push(el.columns.map(() => ({content:'', colspan:1, rowspan:1, styles:{}})));
   renderCode();
   renderTableEditor();
@@ -2544,6 +2680,7 @@ function tblAddRow() {
 function tblRemoveRow(ri) {
   const el = findElement(tableEditId);
   if (!el) return;
+  pushHistory();
   el.rows.splice(ri, 1);
   selectedCells  = selectedCells.filter(c => c.ri !== ri).map(c => c.ri > ri ? {...c, ri: c.ri - 1} : c);
   if (selectedCells.length === 0) lastAnchorCell = null;
@@ -2605,6 +2742,7 @@ function dzDrop(e, zone) {
 
 function dropToZone(srcId, afterId, parentId) {
   if (!srcId) return;
+  pushHistory();
 
   const dragged = findElement(srcId);
   if (!dragged) return;
@@ -2666,6 +2804,7 @@ function handleImportModalClick(e) {
 }
 
 function doImport(mode) {
+  pushHistory();
   const html = document.getElementById('import-textarea').value.trim();
   const errEl = document.getElementById('import-error');
   errEl.style.display = 'none';
@@ -2768,6 +2907,15 @@ function domToEl(node) {
 
     case 'hr':
       return makeElement('hr');
+
+    case 'a': {
+      const el = makeElement('link');
+      el.attrs.href   = node.getAttribute('href')   || '';
+      el.attrs.target = node.getAttribute('target') || '_blank';
+      el.styles  = parseStyleStr(node.getAttribute('style') || '');
+      el.content = node.innerHTML;
+      return el;
+    }
 
     case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6': {
       const el = makeElement('h');
@@ -3000,6 +3148,16 @@ document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {
     e.preventDefault();
     saveProject();
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault();
+    undo();
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    e.preventDefault();
+    redo();
     return;
   }
   if (e.key === 'Escape') {
