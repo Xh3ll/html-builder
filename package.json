@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "description": "Visueller HTML-Code-Generator",
   "main": "main.js",
-  "author": "Sven Kadereit",
+  "author": "Xhell",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
