@@ -1,0 +1,3059 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML Builder</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap');
+
+:root {
+  --bg:        #0b0b14;
+  --surface:   #13131f;
+  --surface2:  #1c1c2e;
+  --surface3:  #252538;
+  --border:    #2a2a42;
+  --border2:   #3a3a58;
+  --accent:    #7c3aed;
+  --accent2:   #a855f7;
+  --danger:    #e94560;
+  --text:      #e8e8f0;
+  --text-dim:  #7070a0;
+  --text-muted:#404060;
+  --green:     #10b981;
+  --orange:    #f59e0b;
+  --red:       #ef4444;
+  --gray:      #6b7280;
+
+  --c-div:   #7c3aed;
+  --c-p:     #10b981;
+  --c-img:   #f59e0b;
+  --c-hr:    #6b7280;
+  --c-h:     #ef4444;
+  --c-br:    #374151;
+  --c-table: #0ea5e9;
+  --c-badge: #f97316;
+  --c-ul:    #06b6d4;
+  --c-ol:    #ec4899;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ─── HEADER ─── */
+.app-header {
+  height: 52px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.app-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.app-title em { color: var(--accent2); font-style: normal; }
+
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
+.btn {
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  padding: 6px 13px;
+}
+.btn-ghost {
+  background: var(--surface2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--surface3); color: var(--text); border-color: var(--border2); }
+
+.btn-danger-outline {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid rgba(233,69,96,0.35);
+}
+.btn-danger-outline:hover { background: rgba(233,69,96,0.12); border-color: var(--danger); }
+
+.save-status {
+  font-size: 11px;
+  color: var(--green);
+  opacity: 0;
+  transition: opacity 0.4s;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ─── UPDATE BAR ─── */
+.update-bar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  height: 36px;
+  background: linear-gradient(90deg, rgba(124,58,237,0.18), rgba(168,85,247,0.10));
+  border-bottom: 1px solid rgba(124,58,237,0.35);
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+.update-bar.show { display: flex; }
+.update-bar-text { flex: 1; }
+.update-progress {
+  width: 120px;
+  height: 4px;
+  background: var(--surface3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.update-progress-fill {
+  height: 100%;
+  background: var(--accent2);
+  border-radius: 2px;
+  transition: width 0.3s;
+  width: 0%;
+}
+.btn-update {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 5px 13px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.btn-update:hover { background: var(--accent2); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+}
+.btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
+.btn-primary.success { background: var(--green); border-color: var(--green); }
+
+/* ─── MAIN GRID ─── */
+.main {
+  display: grid;
+  grid-template-columns: 270px 1fr 330px;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ─── PANEL ─── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.panel:last-child { border-right: none; }
+
+.panel-head {
+  padding: 9px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+}
+
+/* ─── LEFT PANEL ─── */
+.context-bar {
+  background: rgba(124,58,237,0.12);
+  border: 1px solid rgba(124,58,237,0.35);
+  border-radius: 7px;
+  padding: 7px 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--accent2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.context-bar.hidden { display: none; }
+.context-bar-label { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.context-bar-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.btn-exit {
+  background: transparent;
+  border: 1px solid rgba(124,58,237,0.5);
+  color: var(--accent2);
+  padding: 3px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.btn-exit:hover { background: rgba(124,58,237,0.2); }
+
+/* Palette */
+.palette-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.pal-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 9px 4px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+.pal-btn:hover { background: var(--surface3); color: var(--text); border-color: var(--border2); transform: translateY(-1px); }
+.pal-btn .pal-icon { font-size: 1.1rem; line-height: 1; }
+.pal-btn.type-div:hover   { border-color: var(--c-div);   color: #b88bff; }
+.pal-btn.type-p:hover     { border-color: var(--c-p);     color: #6ee7b7; }
+.pal-btn.type-img:hover   { border-color: var(--c-img);   color: #fcd34d; }
+.pal-btn.type-hr:hover    { border-color: var(--c-hr);    color: #d1d5db; }
+.pal-btn.type-h:hover     { border-color: var(--c-h);     color: #fca5a5; }
+.pal-btn.type-br:hover    { border-color: #556;            color: #a0a0c0; }
+.pal-btn.type-table:hover { border-color: var(--c-table); color: #7dd3fc; }
+.pal-btn.type-badge:hover { border-color: var(--c-badge); color: #fdba74; }
+.pal-btn.type-ul:hover    { border-color: var(--c-ul);    color: #67e8f9; }
+.pal-btn.type-ol:hover    { border-color: var(--c-ol);    color: #f9a8d4; }
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 12px 0;
+}
+
+/* Properties */
+.props-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 24px 10px;
+  line-height: 1.7;
+}
+.props-empty .big-icon { font-size: 2rem; margin-bottom: 6px; display: block; opacity: 0.4; }
+
+.props-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.props-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.prop-row { margin-bottom: 9px; }
+.prop-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+  font-weight: 600;
+}
+
+.prop-input, .prop-select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  transition: border-color 0.15s;
+}
+.prop-input:focus, .prop-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface3);
+}
+.prop-select option { background: var(--surface2); }
+
+.prop-textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  resize: vertical;
+  min-height: 68px;
+  transition: border-color 0.15s;
+}
+.prop-textarea:focus { outline: none; border-color: var(--accent); background: var(--surface3); }
+
+.prop-row-half {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.prop-row-color {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.prop-color-swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  background: none;
+}
+.prop-color-swatch::-webkit-color-swatch-wrapper { padding: 2px; }
+.prop-color-swatch::-webkit-color-swatch { border-radius: 4px; border: none; }
+
+.align-group { display: flex; gap: 4px; }
+.align-btn {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: center;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+.align-btn:hover { background: var(--surface3); color: var(--text); }
+.align-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.level-group { display: flex; gap: 3px; }
+.level-btn {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+.level-btn:hover { background: var(--surface3); color: var(--text); }
+.level-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+.prop-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+/* ─── CANVAS ─── */
+.canvas-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 50px 20px;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.canvas-empty .big-icon { font-size: 2.5rem; display: block; margin-bottom: 10px; opacity: 0.3; }
+
+/* Element block card */
+.el-block {
+  border: 2px solid var(--border2);
+  border-radius: 9px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+.el-block:hover { border-color: var(--border2); box-shadow: 0 2px 12px rgba(0,0,0,0.4); }
+.el-block.selected { box-shadow: 0 0 0 2px var(--accent), 0 4px 20px rgba(124,58,237,0.2); }
+
+.el-block.type-div  { border-color: rgba(124,58,237,0.45); }
+.el-block.type-div.selected  { box-shadow: 0 0 0 2px var(--c-div), 0 4px 20px rgba(124,58,237,0.3); }
+.el-block.type-p    { border-color: rgba(16,185,129,0.35); }
+.el-block.type-p.selected    { box-shadow: 0 0 0 2px var(--c-p), 0 4px 20px rgba(16,185,129,0.2); }
+.el-block.type-img  { border-color: rgba(245,158,11,0.35); }
+.el-block.type-img.selected  { box-shadow: 0 0 0 2px var(--c-img), 0 4px 20px rgba(245,158,11,0.2); }
+.el-block.type-hr    { border-color: rgba(107,114,128,0.35); }
+.el-block.type-h     { border-color: rgba(239,68,68,0.35); }
+.el-block.type-h.selected     { box-shadow: 0 0 0 2px var(--c-h), 0 4px 20px rgba(239,68,68,0.2); }
+.el-block.type-table { border-color: rgba(14,165,233,0.35); }
+.el-block.type-table .el-head{ background: rgba(14,165,233,0.14); border-color: rgba(14,165,233,0.15); }
+.el-block.type-table .el-type-badge { background: rgba(14,165,233,0.25); color: #7dd3fc; }
+.el-block.type-table.selected { box-shadow: 0 0 0 2px var(--c-table), 0 4px 20px rgba(14,165,233,0.2); }
+.el-block.type-badge { border-color: rgba(249,115,22,0.35); }
+.el-block.type-badge .el-head{ background: rgba(249,115,22,0.14); border-color: rgba(249,115,22,0.15); }
+.el-block.type-badge .el-type-badge { background: rgba(249,115,22,0.25); color: #fdba74; }
+.el-block.type-badge.selected { box-shadow: 0 0 0 2px var(--c-badge), 0 4px 20px rgba(249,115,22,0.2); }
+.el-block.type-ul { border-color: rgba(6,182,212,0.35); }
+.el-block.type-ul .el-head { background: rgba(6,182,212,0.14); border-color: rgba(6,182,212,0.15); }
+.el-block.type-ul .el-type-badge { background: rgba(6,182,212,0.25); color: #67e8f9; }
+.el-block.type-ul.selected { box-shadow: 0 0 0 2px var(--c-ul), 0 4px 20px rgba(6,182,212,0.2); }
+.el-block.type-ol { border-color: rgba(236,72,153,0.35); }
+.el-block.type-ol .el-head { background: rgba(236,72,153,0.14); border-color: rgba(236,72,153,0.15); }
+.el-block.type-ol .el-type-badge { background: rgba(236,72,153,0.25); color: #f9a8d4; }
+.el-block.type-ol.selected { box-shadow: 0 0 0 2px var(--c-ol), 0 4px 20px rgba(236,72,153,0.2); }
+
+.el-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: 7px 7px 0 0;
+  border-bottom: 1px solid transparent;
+}
+.type-div  .el-head { background: rgba(124,58,237,0.18); border-color: rgba(124,58,237,0.2); }
+.type-p    .el-head { background: rgba(16,185,129,0.14); border-color: rgba(16,185,129,0.15); }
+.type-img  .el-head { background: rgba(245,158,11,0.14); border-color: rgba(245,158,11,0.15); }
+.type-hr   .el-head { background: rgba(107,114,128,0.14); border-color: rgba(107,114,128,0.15); }
+.type-h    .el-head { background: rgba(239,68,68,0.14); border-color: rgba(239,68,68,0.15); }
+.type-br   .el-head { background: rgba(55,65,81,0.4); border-color: rgba(55,65,81,0.3); }
+
+.el-type-info { display: flex; align-items: center; gap: 6px; }
+.el-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.type-div  .el-type-badge { background: rgba(124,58,237,0.3); color: #c4b5fd; }
+.type-p    .el-type-badge { background: rgba(16,185,129,0.25); color: #6ee7b7; }
+.type-img  .el-type-badge { background: rgba(245,158,11,0.25); color: #fcd34d; }
+.type-hr   .el-type-badge { background: rgba(107,114,128,0.25); color: #d1d5db; }
+.type-h    .el-type-badge { background: rgba(239,68,68,0.25); color: #fca5a5; }
+.type-br   .el-type-badge { background: rgba(55,65,81,0.5); color: #9ca3af; }
+
+.el-tag { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+.el-actions { display: flex; gap: 3px; }
+.el-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.45);
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+  font-family: inherit;
+}
+.el-btn:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+.el-btn.del:hover { background: rgba(233,69,96,0.25); color: var(--danger); border-color: rgba(233,69,96,0.3); }
+
+.el-body { padding: 7px 10px; }
+.el-preview {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.el-preview.hr-line { border-top: 1px solid var(--border2); margin: 5px 0; }
+.el-preview.br-line { color: var(--text-muted); font-style: italic; }
+
+/* Div children */
+.div-children-wrap {
+  margin: 0 8px 8px;
+  padding: 8px;
+  border: 1px dashed rgba(124,58,237,0.3);
+  border-radius: 6px;
+  background: rgba(124,58,237,0.04);
+}
+.div-children-wrap .el-block { margin-bottom: 6px; }
+.div-children-wrap .el-block:last-child { margin-bottom: 0; }
+
+.div-empty-children {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 8px;
+}
+
+.btn-enter-div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  background: rgba(124,58,237,0.1);
+  border: 1px dashed rgba(124,58,237,0.4);
+  color: rgba(167,139,250,0.7);
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 600;
+  margin-top: 6px;
+  transition: all 0.15s;
+}
+.btn-enter-div:hover { background: rgba(124,58,237,0.2); color: #c4b5fd; border-color: rgba(124,58,237,0.6); }
+
+/* Active context highlight */
+.el-block.context-target {
+  border-color: rgba(124,58,237,0.8) !important;
+  box-shadow: 0 0 0 1px rgba(124,58,237,0.5), inset 0 0 20px rgba(124,58,237,0.06);
+}
+
+/* ─── CODE PANEL ─── */
+.code-panel-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.code-area {
+  flex: 1;
+  width: 100%;
+  background: #080811;
+  border: none;
+  color: #c9d1d9;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 11.5px;
+  line-height: 1.65;
+  padding: 14px;
+  resize: none;
+  outline: none;
+  min-height: 0;
+  tab-size: 2;
+}
+.code-area::placeholder { color: var(--text-muted); font-style: italic; }
+
+.code-footer {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+#copy-btn { flex: 1; }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.hidden { display: none; }
+
+.modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  width: 90vw;
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.7);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.modal-title { font-weight: 700; font-size: 14px; }
+
+.modal-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+  font-family: inherit;
+}
+.modal-close:hover { background: var(--surface3); color: var(--text); }
+
+.preview-iframe {
+  flex: 1;
+  border: none;
+  background: #fff;
+}
+
+/* ─── TABLE EDITOR MODAL ─── */
+.table-editor-wrap { overflow-x: auto; padding-bottom: 6px; }
+.table-editor-wrap table { border-collapse: collapse; }
+.table-editor-wrap th, .table-editor-wrap td { padding: 3px; vertical-align: top; }
+.tbl-head-input {
+  width: 115px; background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.4);
+  color: #c4b5fd; padding: 5px 7px; border-radius: 5px; font-size: 12px; font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tbl-head-input:focus { outline: none; border-color: var(--accent); }
+.tbl-cell-input {
+  width: 115px; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 5px 7px; border-radius: 5px; font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tbl-cell-input:focus { outline: none; border-color: var(--c-table); }
+.tbl-del-btn {
+  background: transparent; border: 1px solid rgba(233,69,96,0.3); color: var(--danger);
+  width: 26px; height: 26px; border-radius: 5px; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; font-family: inherit;
+  transition: all 0.12s;
+}
+.tbl-del-btn:hover { background: rgba(233,69,96,0.15); }
+.tbl-add-btn {
+  background: var(--surface2); border: 1px dashed var(--border2); color: var(--text-dim);
+  padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;
+  font-family: inherit; transition: all 0.12s;
+}
+.tbl-add-btn:hover { border-color: var(--c-table); color: #7dd3fc; }
+
+/* ─── TABLE CELL SELECTION / MERGE ─── */
+.tbl-cell-wrap { position: relative; cursor: pointer; border-radius: 5px; padding: 2px; transition: background 0.1s; }
+.tbl-cell-wrap:hover { background: rgba(125,211,252,0.07); }
+.tbl-cell-wrap.selected { background: rgba(125,211,252,0.14); outline: 2px solid #7dd3fc; border-radius: 5px; }
+.tbl-cell-wrap.selected .tbl-cell-input { border-color: rgba(125,211,252,0.5); }
+.tbl-cell-input { display: block; width: 100%; min-width: 90px; box-sizing: border-box; }
+.tbl-cell-span-badge {
+  position: absolute; top: 2px; right: 2px; background: rgba(124,58,237,0.7);
+  color: #fff; font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 3px;
+  pointer-events: none; line-height: 1.4;
+}
+#table-cell-props {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--surface);
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+}
+.tbl-cell-props-bar {
+  background: rgba(125,211,252,0.06); border: 1px solid rgba(125,211,252,0.2);
+  border-radius: 8px; padding: 10px 14px; margin-bottom: 12px;
+  display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;
+}
+.tbl-cell-props-bar .tbl-prop-group { display:flex; flex-direction:column; gap:4px; }
+.tbl-cell-props-bar .tbl-prop-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.tbl-mini-input {
+  width: 52px; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 4px 6px; border-radius: 5px; font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tbl-mini-input:focus { outline: none; border-color: #7dd3fc; }
+.tbl-mini-select {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 4px 6px; border-radius: 5px; font-size: 12px;
+  font-family: inherit;
+}
+.tbl-mini-select:focus { outline: none; border-color: #7dd3fc; }
+.tbl-mini-color { width: 32px; height: 28px; padding: 1px; border-radius: 5px; border: 1px solid var(--border); cursor: pointer; background: none; }
+.tbl-cell-no-sel { color: var(--text-muted); font-size: 12px; font-style: italic; padding: 4px 0; }
+.tbl-caption-input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 5px 8px; border-radius: 5px; font-size: 12px;
+  font-family: 'JetBrains Mono', monospace; margin-bottom: 10px; box-sizing: border-box;
+}
+.tbl-caption-input:focus { outline: none; border-color: var(--c-table); }
+.tbl-toggle-row { display:flex; align-items:center; gap:8px; margin-bottom: 10px; font-size: 12px; color: var(--text-dim); }
+.tbl-toggle-row input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+
+/* ─── DRAG & DROP ─── */
+.el-drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 0 6px 0 0;
+  user-select: none;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color 0.12s;
+}
+.el-drag-handle:hover { color: var(--text-dim); }
+.el-drag-handle:active { cursor: grabbing; }
+
+.el-block[draggable="true"] { cursor: default; }
+.el-block.dragging { opacity: 0.3; pointer-events: none; outline: 2px dashed var(--border2); }
+
+/* Drop zones between elements */
+.drop-zone {
+  height: 6px;
+  border-radius: 4px;
+  margin: 1px 0;
+  transition: height 0.1s, background 0.1s, border 0.1s;
+  flex-shrink: 0;
+}
+body.drag-active .drop-zone {
+  height: 10px;
+  background: rgba(255,255,255,0.025);
+  border: 1px dashed rgba(255,255,255,0.07);
+  cursor: copy;
+}
+.drop-zone.drag-over {
+  height: 28px !important;
+  background: rgba(124,58,237,0.2) !important;
+  border: 2px dashed var(--accent) !important;
+  border-radius: 6px;
+}
+body.drag-active .div-children-wrap {
+  border-color: rgba(124,58,237,0.45);
+}
+body.drag-active .el-block:not(.dragging):hover {
+  border-color: inherit;
+}
+
+/* ─── MISC ─── */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="app-title">🔨 <em>HTML</em> Builder</div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" onclick="loadProject()" title="Projekt öffnen">📂 Laden</button>
+    <button class="btn btn-ghost" onclick="saveProject()" title="Projekt speichern (Strg+S)">💾 Speichern</button>
+    <span id="save-status" class="save-status"></span>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 2px"></div>
+    <button class="btn btn-ghost" onclick="openImport()">📥 Importieren</button>
+    <button class="btn btn-ghost" onclick="previewCode()">👁 Vorschau</button>
+    <button class="btn btn-danger-outline" onclick="clearAll()">🗑 Alles löschen</button>
+  </div>
+</header>
+
+<!-- UPDATE BAR -->
+<div class="update-bar" id="update-bar">
+  <span id="update-text" class="update-bar-text"></span>
+  <div class="update-progress" id="update-progress" style="display:none">
+    <div class="update-progress-fill" id="update-progress-fill"></div>
+  </div>
+  <button class="btn-update" id="update-btn" style="display:none" onclick="handleUpdateBtn()"></button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: Palette + Properties -->
+  <div class="panel">
+    <div class="panel-head">Elemente &amp; Eigenschaften</div>
+    <div class="panel-body">
+
+      <!-- Context bar -->
+      <div class="context-bar hidden" id="context-bar">
+        <div class="context-bar-label">📦 <span id="context-label">Innerhalb von div</span></div>
+        <button class="btn-exit" onclick="exitContext()">← Zurück</button>
+      </div>
+
+      <div class="palette-label">Hinzufügen</div>
+      <div class="palette-grid">
+        <button class="pal-btn type-div" onclick="addElement('div')" title="Container (div)">
+          <span class="pal-icon">📦</span><span>Div</span>
+        </button>
+        <button class="pal-btn type-p" onclick="addElement('p')" title="Absatz (p)">
+          <span class="pal-icon">¶</span><span>Absatz</span>
+        </button>
+        <button class="pal-btn type-img" onclick="addElement('img')" title="Bild (img)">
+          <span class="pal-icon">🖼</span><span>Bild</span>
+        </button>
+        <button class="pal-btn type-hr" onclick="addElement('hr')" title="Trennlinie (hr)">
+          <span class="pal-icon">—</span><span>Trennlinie</span>
+        </button>
+        <button class="pal-btn type-h" onclick="addElement('h')" title="Überschrift (h1–h6)">
+          <span class="pal-icon" style="font-weight:800;font-size:.95rem">H</span><span>Überschrift</span>
+        </button>
+        <button class="pal-btn type-br" onclick="addElement('br')" title="Leerzeile">
+          <span class="pal-icon">↵</span><span>Leerzeile</span>
+        </button>
+        <button class="pal-btn type-table" onclick="addElement('table')" title="Tabelle (table)">
+          <span class="pal-icon">⊞</span><span>Tabelle</span>
+        </button>
+        <button class="pal-btn type-badge" onclick="addElement('badge')" title="Farbbalken/Abzeichen">
+          <span class="pal-icon">🏷</span><span>Abzeichen</span>
+        </button>
+        <button class="pal-btn type-ul" onclick="addElement('ul')" title="Aufzählung (ul)">
+          <span class="pal-icon">•≡</span><span>Liste</span>
+        </button>
+        <button class="pal-btn type-ol" onclick="addElement('ol')" title="Nummerierte Liste (ol)">
+          <span class="pal-icon">1≡</span><span>Num.-Liste</span>
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Properties -->
+      <div id="props-panel">
+        <div id="props-empty" class="props-empty">
+          <span class="big-icon">✏️</span>
+          Kein Element ausgewählt.<br>Klicke auf ein Element im Canvas.
+        </div>
+        <div id="props-content" style="display:none"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MIDDLE: Canvas -->
+  <div class="panel">
+    <div class="panel-head">Canvas — Dokumentstruktur</div>
+    <div class="panel-body" id="canvas">
+      <div class="canvas-empty" id="canvas-empty">
+        <span class="big-icon">📄</span>
+        Füge links Elemente hinzu,<br>um das Dokument aufzubauen.
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Code -->
+  <div class="panel">
+    <div class="panel-head">Generierter HTML-Code</div>
+    <div class="code-panel-inner">
+      <textarea class="code-area" id="code-area" readonly spellcheck="false"
+        placeholder="← Füge Elemente hinzu, um den Code zu sehen ..."></textarea>
+      <div class="code-footer">
+        <button class="btn btn-primary" id="copy-btn" onclick="copyCode()">📋 Code kopieren</button>
+        <button class="btn btn-ghost" onclick="previewCode()">👁 Vorschau</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- PREVIEW MODAL -->
+<!-- IMPORT MODAL -->
+<div class="modal-overlay hidden" id="import-modal" onclick="handleImportModalClick(event)">
+  <div class="modal-box" style="height:auto;max-height:85vh;width:min(720px,92vw)" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">📥 HTML importieren</span>
+      <button class="modal-close" onclick="closeImport()">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.6">
+        Füge deinen vorhandenen HTML-Code hier ein. Er wird analysiert und in bearbeitbare Blöcke umgewandelt.<br>
+        <span style="color:var(--text-muted);font-size:11px">Unterstützt: &lt;div&gt;, &lt;p&gt;, &lt;img&gt;, &lt;hr&gt;, &lt;h1&gt;–&lt;h6&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;table&gt;, Leerzeilen. Unbekannte Tags werden übersprungen.</span>
+      </p>
+      <textarea id="import-textarea"
+        style="width:100%;height:280px;background:#080811;border:1px solid var(--border2);
+               color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size:11.5px;
+               line-height:1.6;padding:12px;border-radius:8px;resize:vertical;outline:none;tab-size:2"
+        placeholder="<div style=&quot;border-radius: 15px; padding: 30px;&quot;>&#10;  <p style=&quot;text-align:center&quot;>Dein Text hier</p>&#10;</div>"></textarea>
+      <div id="import-error" style="color:var(--danger);font-size:12px;display:none"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
+        <span style="font-size:12px;color:var(--text-muted);margin-right:auto">Modus:</span>
+        <button class="btn btn-ghost" onclick="closeImport()">Abbrechen</button>
+        <button class="btn btn-ghost" onclick="doImport('append')" title="Fügt den importierten Code ans Ende des bestehenden Dokuments an">➕ Anfügen</button>
+        <button class="btn btn-primary" onclick="doImport('replace')" title="Ersetzt das gesamte Dokument durch den importierten Code">↩ Ersetzen &amp; importieren</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABLE EDITOR MODAL -->
+<div class="modal-overlay hidden" id="table-modal" onclick="handleTableModalClick(event)">
+  <div class="modal-box" style="width:min(900px,95vw);height:auto;max-height:88vh" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">⊞ Tabelle bearbeiten</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="tbl-add-btn" onclick="tblAddCol()">+ Spalte</button>
+        <button class="tbl-add-btn" onclick="tblAddRow()">+ Zeile</button>
+        <button class="tbl-add-btn" id="tbl-edit-cells-btn" onclick="tblOpenCellProps()" title="Eigenschaften der ausgewählten Zelle(n) bearbeiten">✏ Bearbeiten</button>
+        <button class="tbl-add-btn" onclick="tblToggleCaption()" id="tbl-caption-btn" title="Tabellenoptionen ein-/ausblenden">⚙ Optionen</button>
+        <button class="modal-close" onclick="closeTableModal()">✕</button>
+      </div>
+    </div>
+    <div style="padding:16px;overflow-y:auto;max-height:calc(88vh - 60px)">
+      <div id="table-caption-row" style="display:none">
+        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px">Tabellenüberschrift (caption)</label>
+        <input class="tbl-caption-input" id="table-caption-input" type="text" placeholder="z.B. Meine Tabelle" oninput="tblUpdateCaption(this.value)">
+        <div id="table-header-toggle" class="tbl-toggle-row">
+          <input type="checkbox" id="tbl-use-header" onchange="tblToggleHeader(this.checked)">
+          <label for="tbl-use-header">Kopfzeile (thead) anzeigen</label>
+        </div>
+      </div>
+      <div id="table-cell-props" style="display:none"></div>
+      <div id="table-editor-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="modal-overlay hidden" id="preview-modal" onclick="handleModalClick(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">👁 Vorschau</span>
+      <button class="modal-close" onclick="closePreview()">✕</button>
+    </div>
+    <iframe id="preview-iframe" class="preview-iframe"></iframe>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let elements   = [];   // root-level elements
+let selectedId = null;
+let contextId  = null; // id of div currently targeted for child inserts
+let idCounter  = 0;
+let dragId     = null; // id of element currently being dragged
+let selectedCells   = [];   // [{ ri, ci }, ...] — selected cells in table editor (multi-select)
+let lastAnchorCell  = null; // { ri, ci } — anchor for Shift-click range select
+
+let currentFilePath = null;
+let isDirty         = false;
+let autosavePath    = null;
+let _firstRender    = true;
+const _canvasEmpty  = document.getElementById('canvas-empty');
+
+// ══════════════════════════════════════════════
+//  DEFAULTS
+// ══════════════════════════════════════════════
+function makeElement(type) {
+  const id = 'el-' + (++idCounter);
+  const base = { id, type, styles: {}, attrs: {}, content: '' };
+
+  switch (type) {
+    case 'div':
+      return { ...base,
+        styles: {
+          'border-radius': '15px',
+          'padding': '15px',
+          'background-color': 'rgba(31,31,31,0.5)',
+          'font-family': 'Arial, sans-serif',
+          'color': 'rgb(224,224,224)'
+        },
+        children: []
+      };
+    case 'p':
+      return { ...base,
+        content: 'Absatz-Text hier eingeben …',
+        styles: { 'text-align': 'left' }
+      };
+    case 'img':
+      return { ...base,
+        attrs: { src: '', alt: '', width: '900', height: '168', wrapAlign: 'center' },
+        styles: {}
+      };
+    case 'hr':
+      return { ...base };
+    case 'h':
+      return { ...base,
+        level: 2,
+        content: 'Überschrift',
+        styles: { 'text-align': 'left' }
+      };
+    case 'br':
+      return { ...base };
+    case 'table': {
+      const mkCell = () => ({ content: '', colspan: 1, rowspan: 1, styles: {} });
+      return { ...base,
+        attrs: { align: 'center', border: '1', cellpadding: '1', cellspacing: '1' },
+        styles: { width: '70%' },
+        headerStyle: { 'background-color': 'rgb(51,51,51)', 'border-color': 'rgb(68,68,68)', 'text-align': 'center' },
+        columns: ['Spalte 1', 'Spalte 2', 'Spalte 3'],
+        rows: [
+          [mkCell(), mkCell(), mkCell()],
+          [mkCell(), mkCell(), mkCell()]
+        ],
+        caption: '',
+        useHeader: true,
+        summary: ''
+      };
+    }
+    case 'badge':
+      return { ...base,
+        content: 'Abschnitt',
+        styles: { 'background-color': '#FFC758', 'border-radius': '10px', 'margin-bottom': '15px', 'padding': '10px', 'text-align': 'center' },
+        attrs: { color: '#000000' }
+      };
+    case 'ul':
+      return { ...base,
+        content: 'Erster Eintrag\nZweiter Eintrag\nDritter Eintrag',
+        styles: {}
+      };
+    case 'ol':
+      return { ...base,
+        content: 'Erster Schritt\nZweiter Schritt\nDritter Schritt',
+        styles: {}
+      };
+    default:
+      return base;
+  }
+}
+
+// ══════════════════════════════════════════════
+//  CELL HELPERS
+// ══════════════════════════════════════════════
+// Normalizes a cell value (string legacy or object) to a full cell object
+function normalizeCell(c) {
+  if (c === null || c === undefined) return { content: '', colspan: 1, rowspan: 1, styles: {} };
+  if (typeof c === 'string') return { content: c, colspan: 1, rowspan: 1, styles: {} };
+  return {
+    content: c.content !== undefined ? c.content : '',
+    colspan: (c.colspan && c.colspan > 1) ? c.colspan : 1,
+    rowspan: (c.rowspan && c.rowspan > 1) ? c.rowspan : 1,
+    styles:  c.styles  || {}
+  };
+}
+
+// Build a coverage map: keys "ri,ci" that are spanned by another cell
+function buildCoverageMap(rows) {
+  const covered = {};
+  rows.forEach((row, ri) => {
+    (row || []).forEach((rawCell, ci) => {
+      const c = normalizeCell(rawCell);
+      if (c.colspan > 1 || c.rowspan > 1) {
+        for (let r = ri; r < ri + c.rowspan; r++) {
+          for (let cc = ci; cc < ci + c.colspan; cc++) {
+            if (r !== ri || cc !== ci) covered[`${r},${cc}`] = true;
+          }
+        }
+      }
+    });
+  });
+  return covered;
+}
+
+// ══════════════════════════════════════════════
+//  TREE HELPERS
+// ══════════════════════════════════════════════
+function findElement(id, tree) {
+  if (tree === undefined) tree = elements;
+  for (const el of tree) {
+    if (el.id === id) return el;
+    if (el.children) {
+      const f = findElement(id, el.children);
+      if (f) return f;
+    }
+  }
+  return null;
+}
+
+function getSiblings(id, tree) {
+  if (tree === undefined) tree = elements;
+  for (let i = 0; i < tree.length; i++) {
+    if (tree[i].id === id) return tree;
+    if (tree[i].children) {
+      const f = getSiblings(id, tree[i].children);
+      if (f) return f;
+    }
+  }
+  return null;
+}
+
+function removeElement(id, tree) {
+  if (tree === undefined) tree = elements;
+  for (let i = 0; i < tree.length; i++) {
+    if (tree[i].id === id) { tree.splice(i, 1); return true; }
+    if (tree[i].children && removeElement(id, tree[i].children)) return true;
+  }
+  return false;
+}
+
+// ══════════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════════
+function addElement(type) {
+  const el = makeElement(type);
+  if (contextId) {
+    const parent = findElement(contextId);
+    if (parent && parent.children) parent.children.push(el);
+    else elements.push(el);
+  } else {
+    elements.push(el);
+  }
+  selectedId = el.id;
+  renderAll();
+}
+
+function selectElement(id) {
+  selectedId = (selectedId === id) ? null : id;
+  renderAll();
+}
+
+function deleteElement(id) {
+  if (selectedId === id) selectedId = null;
+  if (contextId === id) { contextId = null; updateContextBar(); }
+  removeElement(id);
+  renderAll();
+}
+
+function moveElement(id, dir) {
+  const sibs = getSiblings(id);
+  if (!sibs) return;
+  const i = sibs.findIndex(e => e.id === id);
+  const j = i + dir;
+  if (j < 0 || j >= sibs.length) return;
+  [sibs[i], sibs[j]] = [sibs[j], sibs[i]];
+  renderAll();
+}
+
+function enterDiv(id) {
+  contextId = id;
+  selectedId = null;
+  updateContextBar();
+  renderAll();
+}
+
+function exitContext() {
+  contextId = null;
+  updateContextBar();
+  renderAll();
+}
+
+function updateProp(prop, value) {
+  if (!selectedId) return;
+  const el = findElement(selectedId);
+  if (!el) return;
+  if (prop === 'content')       { el.content = value; }
+  else if (prop === 'level')    { el.level = parseInt(value); }
+  else if (prop === 'badge-color')     { el.attrs = el.attrs||{}; el.attrs.color = value; }
+  else if (prop === 'table-align')     { el.attrs = el.attrs||{}; el.attrs.align = value; }
+  else if (prop === 'table-border')    { el.attrs = el.attrs||{}; el.attrs.border = value; }
+  else if (prop === 'table-summary')   { el.attrs = el.attrs||{}; el.attrs.summary = value; }
+  else if (prop === 'table-caption')   { el.caption = value; }
+  else if (prop === 'table-useHeader') { el.useHeader = value; }
+  else if (prop === 'header-bg')       { el.headerStyle = el.headerStyle||{}; el.headerStyle['background-color'] = value; }
+  else if (prop === 'width-style')     { el.styles = el.styles||{}; el.styles.width = value; }
+  else if (['src','alt','width','height','wrapAlign'].includes(prop)) {
+    el.attrs[prop] = value;
+  } else {
+    if (value === '' || value === null || value === undefined) {
+      delete el.styles[prop];
+    } else {
+      el.styles[prop] = value;
+    }
+  }
+  // Only update canvas + code — never rebuild the properties panel while the user is typing,
+  // otherwise the focused input/textarea gets destroyed and cursor position is lost.
+  renderCanvas();
+  renderCode();
+}
+
+function clearAll() {
+  if (!elements.length) return;
+  if (!confirm('Alle Elemente löschen?')) return;
+  elements = [];
+  currentFilePath = null;
+  selectedId = null;
+  contextId = null;
+  updateContextBar();
+  renderAll();
+  isDirty = false;
+  updateTitle();
+}
+
+// ══════════════════════════════════════════════
+//  CONTEXT BAR
+// ══════════════════════════════════════════════
+function updateContextBar() {
+  const bar = document.getElementById('context-bar');
+  const lbl = document.getElementById('context-label');
+  if (contextId) {
+    lbl.textContent = 'Innerhalb von: #' + contextId;
+    bar.classList.remove('hidden');
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  RENDER CANVAS
+// ══════════════════════════════════════════════
+function renderCanvas() {
+  const canvas = document.getElementById('canvas');
+  const empty  = _canvasEmpty;
+
+  if (elements.length === 0) {
+    canvas.innerHTML = '';
+    canvas.appendChild(empty);
+    empty.style.display = '';
+    return;
+  }
+
+  canvas.innerHTML = renderElementList(elements, 'root');
+}
+
+// Renders an array of elements wrapped in drop zones
+function renderElementList(arr, parentId) {
+  let html = dropZoneHTML('', parentId);          // zone before first element
+  for (const el of arr) {
+    html += renderBlock(el);
+    html += dropZoneHTML(el.id, parentId);        // zone after each element
+  }
+  return html;
+}
+
+// A thin, interactive drop zone bar
+function dropZoneHTML(afterId, parentId) {
+  return `<div class="drop-zone"
+    data-after="${afterId}" data-parent="${parentId}"
+    ondragover="event.preventDefault();event.stopPropagation();dzOver(this)"
+    ondragleave="dzLeave(this)"
+    ondrop="event.preventDefault();event.stopPropagation();dzDrop(event,this)"></div>`;
+}
+
+function renderBlock(el) {
+  const sel   = el.id === selectedId ? ' selected' : '';
+  const isCtx = el.id === contextId  ? ' context-target' : '';
+
+  // Header badge + tag
+  let tagName = '', typeLabel = '';
+  switch (el.type) {
+    case 'div':   typeLabel = 'DIV';        tagName = '&lt;div&gt;'; break;
+    case 'p':     typeLabel = 'ABSATZ';     tagName = '&lt;p&gt;'; break;
+    case 'img':   typeLabel = 'BILD';       tagName = '&lt;img&gt;'; break;
+    case 'hr':    typeLabel = 'TRENNLINIE'; tagName = '&lt;hr&gt;'; break;
+    case 'h':     typeLabel = 'ÜBERSCHRIFT';tagName = '&lt;h' + el.level + '&gt;'; break;
+    case 'br':    typeLabel = 'LEERZEILE';  tagName = '&lt;p&gt;&amp;nbsp;&lt;/p&gt;'; break;
+    case 'table': typeLabel = 'TABELLE';    tagName = '&lt;table&gt;'; break;
+    case 'badge': typeLabel = 'ABZEICHEN';  tagName = '&lt;div&gt;'; break;
+    case 'ul':    typeLabel = 'LISTE';      tagName = '&lt;ul&gt;'; break;
+    case 'ol':    typeLabel = 'NUM.LISTE';  tagName = '&lt;ol&gt;'; break;
+  }
+
+  // Content preview
+  let preview = '';
+  switch (el.type) {
+    case 'div':
+      preview = '<span style="color:var(--text-muted);font-size:10px">' +
+        Object.entries(el.styles).slice(0,2).map(([k,v]) => k + ': ' + v).join('; ') + '</span>';
+      break;
+    case 'p': {
+      const pTxt = el.content.replace(/<[^>]+>/g,'');
+      preview = '<span class="el-preview">' + esc(pTxt.slice(0,60)) + (pTxt.length > 60 ? '…' : '') + '</span>';
+      break;
+    }
+    case 'img':
+      preview = el.attrs.src
+        ? '<span class="el-preview">' + esc(el.attrs.src.slice(0,55)) + '…</span>'
+        : '<span class="el-preview" style="color:var(--text-muted)">Kein Bild gesetzt</span>';
+      break;
+    case 'hr':
+      preview = '<div class="el-preview hr-line"></div>';
+      break;
+    case 'h':
+      preview = '<span class="el-preview" style="font-size:12px">' + esc(el.content.slice(0,50)) + '</span>';
+      break;
+    case 'br':
+      preview = '<span class="el-preview br-line">— Leerzeile (↵) —</span>';
+      break;
+    case 'table': {
+      const cols = (el.columns || []).length;
+      const rows = (el.rows || []).length;
+      const w = (el.styles && el.styles.width) || 'auto';
+      preview = `<span class="el-preview" style="display:flex;align-items:center;gap:8px">
+        <span style="color:#7dd3fc">${cols} Spalten</span>
+        <span style="color:var(--text-muted)">·</span>
+        <span style="color:#7dd3fc">${rows} Zeile(n)</span>
+        <span style="color:var(--text-muted)">·</span>
+        <span style="color:var(--text-muted)">${w}</span>
+        <button onclick="event.stopPropagation();tblEdit('${el.id}')"
+          style="margin-left:auto;background:rgba(14,165,233,0.15);border:1px solid rgba(14,165,233,0.4);
+                 color:#7dd3fc;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-family:inherit">
+          ✏️ Bearbeiten
+        </button>
+      </span>`;
+      break;
+    }
+    case 'badge': {
+      const bg = (el.styles && el.styles['background-color']) || '#FFC758';
+      preview = `<span class="el-preview" style="display:flex;align-items:center;gap:6px">
+        <span style="width:14px;height:14px;background:${bg};border-radius:3px;flex-shrink:0;display:inline-block"></span>
+        <span>${esc(el.content || '')}</span>
+      </span>`;
+      break;
+    }
+    case 'ul':
+    case 'ol': {
+      const items = (el.content || '').split('\n').filter(Boolean);
+      const first = items[0] ? esc(items[0].replace(/<[^>]+>/g,'').slice(0,45)) : '';
+      preview = `<span class="el-preview">${items.length} Einträge${first ? ': ' + first + (items[0].length > 45 ? '…' : '') : ''}</span>`;
+      break;
+    }
+  }
+
+  // Children area for div — uses renderElementList recursively
+  let childrenHtml = '';
+  if (el.type === 'div') {
+    const childList = renderElementList(el.children || [], el.id);
+    childrenHtml = `
+      <div class="div-children-wrap"
+           ondragover="event.stopPropagation()"
+           ondrop="event.stopPropagation()">
+        ${childList}
+      </div>
+      <div style="padding:0 8px 8px">
+        <button class="btn-enter-div" onclick="event.stopPropagation();enterDiv('${el.id}')">
+          ➕ Elemente hier hinzufügen
+        </button>
+      </div>`;
+  }
+
+  return `
+    <div class="el-block type-${el.type}${sel}${isCtx}"
+         data-id="${el.id}"
+         draggable="true"
+         ondragstart="event.stopPropagation();onDragStart('${el.id}',event)"
+         ondragend="event.stopPropagation();onDragEnd(event)"
+         onclick="event.stopPropagation();selectElement('${el.id}')">
+      <div class="el-head">
+        <div class="el-type-info">
+          <span class="el-drag-handle" title="Ziehen zum Verschieben">⠿</span>
+          <span class="el-type-badge">${typeLabel}</span>
+          <span class="el-tag">${tagName}</span>
+        </div>
+        <div class="el-actions" onclick="event.stopPropagation()">
+          <button class="el-btn" onclick="moveElement('${el.id}',-1)" title="Nach oben">▲</button>
+          <button class="el-btn" onclick="moveElement('${el.id}',1)"  title="Nach unten">▼</button>
+          <button class="el-btn del" onclick="deleteElement('${el.id}')" title="Löschen">🗑</button>
+        </div>
+      </div>
+      <div class="el-body">${preview}</div>
+      ${childrenHtml}
+    </div>`;
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════
+//  RENDER PROPERTIES
+// ══════════════════════════════════════════════
+function renderProperties() {
+  const empty   = document.getElementById('props-empty');
+  const content = document.getElementById('props-content');
+
+  if (!selectedId) {
+    empty.style.display = '';
+    content.style.display = 'none';
+    return;
+  }
+
+  const el = findElement(selectedId);
+  if (!el) { empty.style.display = ''; content.style.display = 'none'; return; }
+
+  empty.style.display = 'none';
+  content.style.display = '';
+  content.innerHTML = buildPropsHTML(el);
+}
+
+function buildPropsHTML(el) {
+  const s = el.styles || {};
+  const a = el.attrs  || {};
+
+  let html = `<div class="props-section-title">⚙ ${el.type.toUpperCase()}${el.type==='h'?' H'+el.level:''} Eigenschaften</div>`;
+
+  if (el.type === 'div') {
+    html += propRow('border-radius', 'Eckenradius (px)',
+      `<input class="prop-input" type="number" min="0" value="${parseInt(s['border-radius'])||0}"
+        oninput="updateProp('border-radius',this.value+'px')">`);
+    html += propRow('padding', 'Innenabstand (px)',
+      `<input class="prop-input" type="number" min="0" value="${parseInt(s['padding'])||0}"
+        oninput="updateProp('padding',this.value+'px')">`);
+    html += propRow('margin-bottom', 'Außenabstand unten (px)',
+      `<input class="prop-input" type="number" min="0" value="${parseInt(s['margin-bottom'])||0}"
+        oninput="updateProp('margin-bottom',this.value+'px')">`);
+
+    html += propRow('background-color', 'Hintergrundfarbe',
+      `<div class="prop-row-color">
+        <input class="prop-color-swatch" type="color" value="#1f1f1f"
+          oninput="updateProp('background-color',this.value)">
+        <input class="prop-input" type="text" value="${esc(s['background-color']||'')}"
+          placeholder="rgba(31,31,31,0.5)"
+          oninput="updateProp('background-color',this.value)">
+      </div>`);
+
+    html += propRow('color', 'Schriftfarbe',
+      `<div class="prop-row-color">
+        <input class="prop-color-swatch" type="color" value="#e0e0e0"
+          oninput="updateProp('color',this.value)">
+        <input class="prop-input" type="text" value="${esc(s['color']||'')}"
+          placeholder="rgb(224,224,224)"
+          oninput="updateProp('color',this.value)">
+      </div>`);
+
+    html += propRow('font-family', 'Schriftart',
+      `<input class="prop-input" type="text" value="${esc(s['font-family']||'Arial, sans-serif')}"
+        placeholder="Arial, sans-serif"
+        oninput="updateProp('font-family',this.value)">`);
+
+    html += propRow('background-image', 'Hintergrundbild (URL)',
+      `<input class="prop-input" type="text" value="${esc(s['background-image']||'')}"
+        placeholder='url("https://...")'
+        oninput="updateProp('background-image',this.value)">
+      <div class="prop-hint">Format: url("https://...")</div>`);
+
+    const bgSize   = s['background-size']       || 'cover';   // 'cover' ist der sinnvolle Standard
+    const bgRepeat = s['background-repeat']      || 'no-repeat';
+    const bgAttach = s['background-attachment']  || 'scroll';
+
+    html += propRow('bg-options', 'Hintergrundbild-Optionen',
+      `<div class="prop-row-half">
+        <div>
+          <div class="prop-label">Größe</div>
+          <select class="prop-select" onchange="updateProp('background-size',this.value)">
+            ${['cover','auto','contain','100% 100%'].map(v=>`<option value="${v}"${bgSize===v?' selected':''}>${v}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div class="prop-label">Wiederholung</div>
+          <select class="prop-select" onchange="updateProp('background-repeat',this.value)">
+            ${['no-repeat','repeat','repeat-x','repeat-y'].map(v=>`<option value="${v}"${bgRepeat===v?' selected':''}>${v}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:6px;padding:6px 8px;background:rgba(124,58,237,0.08);border-radius:5px;font-size:11px;color:var(--text-dim);line-height:1.5">
+        💡 <strong style="color:var(--text)">cover</strong> = Bild füllt die gesamte Fläche (empfohlen)<br>
+        <strong style="color:var(--text)">auto</strong> = Originalgröße — bricht ab wenn Seite länger als Bild
+      </div>
+      <div style="margin-top:6px">
+        <div class="prop-label">Befestigung</div>
+        <select class="prop-select" onchange="updateProp('background-attachment',this.value)">
+          ${['scroll','fixed'].map(v=>`<option value="${v}"${bgAttach===v?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>`);
+  }
+
+  else if (el.type === 'p') {
+    const align = s['text-align'] || 'left';
+    html += propRow('content', 'Text-Inhalt (HTML erlaubt)',
+      `<textarea class="prop-textarea" oninput="updateProp('content',this.value)">${esc(el.content)}</textarea>
+       <div class="prop-hint">Du kannst &lt;strong&gt;, &lt;em&gt;, &lt;a&gt; usw. verwenden.</div>`);
+
+    html += propRow('text-align', 'Ausrichtung',
+      `<div class="align-group">
+        ${[['left','←'],['center','↔'],['right','→'],['justify','≡']].map(([v,ico])=>
+          `<button class="align-btn${align===v?' active':''}" onclick="updateProp('text-align','${v}');document.querySelectorAll('.align-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${ico}</button>`
+        ).join('')}
+      </div>`);
+
+    html += propRow('color', 'Schriftfarbe',
+      `<div class="prop-row-color">
+        <input class="prop-color-swatch" type="color" value="#ffffff"
+          oninput="updateProp('color',this.value)">
+        <input class="prop-input" type="text" value="${esc(s['color']||'')}"
+          placeholder="rgb(224,224,224)"
+          oninput="updateProp('color',this.value)">
+      </div>`);
+
+    html += propRow('font-size', 'Schriftgröße (px)',
+      `<input class="prop-input" type="number" min="8" value="${parseInt(s['font-size'])||''}"
+        placeholder="16"
+        oninput="updateProp('font-size',this.value?this.value+'px':'')">`);
+  }
+
+  else if (el.type === 'img') {
+    html += propRow('src', 'Bild-URL (src)',
+      `<input class="prop-input" type="text" value="${esc(a.src||'')}"
+        placeholder="https://..."
+        oninput="updateProp('src',this.value)">`);
+    html += propRow('alt', 'Alt-Text',
+      `<input class="prop-input" type="text" value="${esc(a.alt||'')}"
+        placeholder="Bildbeschreibung"
+        oninput="updateProp('alt',this.value)">`);
+    html += propRow('size', 'Breite × Höhe (px)',
+      `<div class="prop-row-half">
+        <div>
+          <div class="prop-label">Breite</div>
+          <input class="prop-input" type="number" min="0" value="${a.width||''}"
+            placeholder="900"
+            oninput="updateProp('width',this.value)">
+        </div>
+        <div>
+          <div class="prop-label">Höhe</div>
+          <input class="prop-input" type="number" min="0" value="${a.height||''}"
+            placeholder="168"
+            oninput="updateProp('height',this.value)">
+        </div>
+      </div>`);
+
+    const wa = a.wrapAlign || 'center';
+    html += propRow('wrapAlign', 'Ausrichtung (Wrapper)',
+      `<select class="prop-select" onchange="updateProp('wrapAlign',this.value)">
+        ${[['none','Kein Wrapper'],['left','Links'],['center','Zentriert'],['right','Rechts']].map(([v,l])=>
+          `<option value="${v}"${wa===v?' selected':''}>${l}</option>`
+        ).join('')}
+      </select>
+      <div class="prop-hint">Zentriert erzeugt &lt;p style="text-align:center"&gt;&lt;img&gt;&lt;/p&gt;</div>`);
+  }
+
+  else if (el.type === 'hr') {
+    html += `<div class="props-empty" style="padding:12px 0">
+      <span style="font-size:1.4rem;display:block;margin-bottom:6px">—</span>
+      Trennlinie hat keine weiteren Einstellungen.
+    </div>`;
+  }
+
+  else if (el.type === 'h') {
+    const align = s['text-align'] || 'left';
+    html += propRow('level', 'Ebene',
+      `<div class="level-group">
+        ${[1,2,3,4,5,6].map(n=>
+          `<button class="level-btn${el.level===n?' active':''}"
+            onclick="updateProp('level',${n});document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')"
+            >H${n}</button>`
+        ).join('')}
+      </div>`);
+
+    html += propRow('content', 'Text',
+      `<input class="prop-input" type="text" value="${esc(el.content)}"
+        oninput="updateProp('content',this.value)">`);
+
+    html += propRow('text-align', 'Ausrichtung',
+      `<div class="align-group">
+        ${[['left','←'],['center','↔'],['right','→']].map(([v,ico])=>
+          `<button class="align-btn${align===v?' active':''}" onclick="updateProp('text-align','${v}');document.querySelectorAll('.align-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${ico}</button>`
+        ).join('')}
+      </div>`);
+
+    html += propRow('color', 'Schriftfarbe',
+      `<div class="prop-row-color">
+        <input class="prop-color-swatch" type="color" value="#ffffff"
+          oninput="updateProp('color',this.value)">
+        <input class="prop-input" type="text" value="${esc(s['color']||'')}"
+          placeholder="inherit"
+          oninput="updateProp('color',this.value)">
+      </div>`);
+  }
+
+  else if (el.type === 'br') {
+    html += `<div class="props-empty" style="padding:12px 0">
+      <span style="font-size:1.4rem;display:block;margin-bottom:6px">↵</span>
+      Leerzeile — erzeugt <code style="color:var(--accent2)">&lt;p&gt;&amp;nbsp;&lt;/p&gt;</code>
+    </div>`;
+  }
+
+  else if (el.type === 'table') {
+    const a  = el.attrs       || {};
+    const hs = el.headerStyle || {};
+    html += propRow('width', 'Tabellenbreite',
+      `<input class="prop-input" type="text" value="${esc(el.styles && el.styles.width || '70%')}"
+        placeholder="70%"
+        oninput="updateProp('width-style',this.value)">`);
+    html += propRow('align', 'Ausrichtung der Tabelle',
+      `<select class="prop-select" onchange="updateProp('table-align',this.value)">
+        ${['center','left','right'].map(v=>`<option value="${v}"${(a.align||'center')===v?' selected':''}>${v}</option>`).join('')}
+      </select>`);
+    html += propRow('border', 'Rahmen (Stärke)',
+      `<input class="prop-input" type="number" min="0" value="${a.border||1}"
+        oninput="updateProp('table-border',this.value)">`);
+    html += propRow('header-bg', 'Kopfzeilen-Hintergrund',
+      `<div class="prop-row-color">
+        <input class="prop-color-swatch" type="color" value="#333333"
+          oninput="updateProp('header-bg',this.value)">
+        <input class="prop-input" type="text" value="${esc(hs['background-color']||'rgb(51,51,51)')}"
+          placeholder="rgb(51,51,51)"
+          oninput="updateProp('header-bg',this.value)">
+      </div>`);
+    html += propRow('summary', 'Zusammenfassung (summary)',
+      `<input class="prop-input" type="text" value="${esc(a.summary||'')}"
+        placeholder="Kurze Beschreibung für Screenreader"
+        oninput="updateProp('table-summary',this.value)">`);
+    html += propRow('caption', 'Tabellenüberschrift (caption)',
+      `<input class="prop-input" type="text" value="${esc(el.caption||'')}"
+        placeholder="leer = keine caption"
+        oninput="updateProp('table-caption',this.value)">`);
+    html += `<div class="prop-row">
+      <label class="prop-label" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" style="accent-color:var(--accent);width:13px;height:13px"
+          ${el.useHeader !== false ? 'checked' : ''}
+          onchange="updateProp('table-useHeader',this.checked)">
+        Kopfzeile (thead) anzeigen
+      </label>
+    </div>`;
+    html += `<div class="prop-row" style="margin-top:8px">
+      <button class="btn btn-primary" style="width:100%;font-size:12px"
+        onclick="tblEdit('${el.id}')">✏️ Spalten &amp; Zeilen bearbeiten</button>
+    </div>
+    <div class="prop-hint" style="margin-top:4px">
+      ${(el.columns||[]).length} Spalten · ${(el.rows||[]).length} Zeile(n)
+    </div>`;
+  }
+
+  else if (el.type === 'ul' || el.type === 'ol') {
+    html += propRow('content', 'Einträge (ein Eintrag pro Zeile)',
+      `<textarea class="prop-textarea" style="min-height:110px" oninput="updateProp('content',this.value)">${esc(el.content)}</textarea>
+       <div class="prop-hint">Jede Zeile wird zu einem &lt;li&gt;. HTML-Inline-Tags (&lt;strong&gt;, &lt;a&gt; …) erlaubt.</div>`);
+
+    html += propRow('list-style-type', el.type === 'ol' ? 'Nummerierungstyp' : 'Aufzählungszeichen',
+      `<select class="prop-select" onchange="updateProp('list-style-type',this.value)">
+        ${(el.type === 'ol'
+          ? [['decimal','1, 2, 3 …'],['lower-alpha','a, b, c …'],['upper-alpha','A, B, C …'],['lower-roman','i, ii, iii …'],['upper-roman','I, II, III …']]
+          : [['disc','● Punkt (disc)'],['circle','○ Kreis (circle)'],['square','■ Quadrat (square)'],['none','Keines']]
+        ).map(([v,l])=>`<option value="${v}"${(s['list-style-type']||(el.type==='ol'?'decimal':'disc'))===v?' selected':''}>${l}</option>`).join('')}
+      </select>`);
+
+    html += propRow('color', 'Schriftfarbe',
+      `<div class="prop-row-color">
+        <input class="prop-color-swatch" type="color" value="#ffffff"
+          oninput="updateProp('color',this.value)">
+        <input class="prop-input" type="text" value="${esc(s['color']||'')}"
+          placeholder="inherit"
+          oninput="updateProp('color',this.value)">
+      </div>`);
+
+    html += propRow('font-size', 'Schriftgröße (px)',
+      `<input class="prop-input" type="number" min="8" value="${parseInt(s['font-size'])||''}"
+        placeholder="16"
+        oninput="updateProp('font-size',this.value?this.value+'px':'')">`);
+  }
+
+  else if (el.type === 'badge') {
+    html += propRow('content', 'Text',
+      `<input class="prop-input" type="text" value="${esc(el.content||'')}"
+        oninput="updateProp('content',this.value)">`);
+    html += propRow('bg', 'Hintergrundfarbe',
+      `<div class="prop-row-color">
+        <input class="prop-color-swatch" type="color" value="${el.styles&&el.styles['background-color']||'#FFC758'}"
+          oninput="updateProp('background-color',this.value)">
+        <input class="prop-input" type="text" value="${esc(el.styles&&el.styles['background-color']||'#FFC758')}"
+          placeholder="#FFC758"
+          oninput="updateProp('background-color',this.value)">
+      </div>`);
+    html += propRow('color', 'Textfarbe',
+      `<div class="prop-row-color">
+        <input class="prop-color-swatch" type="color" value="${el.attrs&&el.attrs.color||'#000000'}"
+          oninput="updateProp('badge-color',this.value)">
+        <input class="prop-input" type="text" value="${esc(el.attrs&&el.attrs.color||'#000000')}"
+          placeholder="#000000"
+          oninput="updateProp('badge-color',this.value)">
+      </div>`);
+    html += propRow('border-radius', 'Eckenradius (px)',
+      `<input class="prop-input" type="number" min="0" value="${parseInt(el.styles&&el.styles['border-radius'])||10}"
+        oninput="updateProp('border-radius',this.value+'px')">`);
+    html += propRow('padding', 'Innenabstand (px)',
+      `<input class="prop-input" type="number" min="0" value="${parseInt(el.styles&&el.styles['padding'])||10}"
+        oninput="updateProp('padding',this.value+'px')">`);
+    html += propRow('margin-bottom', 'Außenabstand unten (px)',
+      `<input class="prop-input" type="number" min="0" value="${parseInt(el.styles&&el.styles['margin-bottom'])||15}"
+        oninput="updateProp('margin-bottom',this.value+'px')">`);
+  }
+
+  return html;
+}
+
+function propRow(key, label, inputHtml) {
+  return `<div class="prop-row">
+    <label class="prop-label">${label}</label>
+    ${inputHtml}
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  RENDER CODE
+// ══════════════════════════════════════════════
+function renderCode() {
+  const code = elements.map(el => generateHTML(el, '')).join('\n');
+  document.getElementById('code-area').value = code;
+}
+
+function generateHTML(el, indent) {
+  const styleStr = buildStyleStr(el.styles || {});
+  const styleAttr = styleStr ? ` style="${styleStr}"` : '';
+
+  switch (el.type) {
+    case 'div': {
+      const children = (el.children || []).map(c => generateHTML(c, indent + '  ')).join('\n');
+      const inner = children ? '\n' + children + '\n' + indent : '';
+      return `${indent}<div${styleAttr}>${inner}</div>`;
+    }
+    case 'p': {
+      const content = el.content || '';
+      return `${indent}<p${styleAttr}>${content}</p>`;
+    }
+    case 'img': {
+      const a = el.attrs || {};
+      const wPx  = a.width  ? a.width  + 'px' : 'auto';
+      const hPx  = a.height ? a.height + 'px' : 'auto';
+      const imgTag = `${indent}<img alt="${escAttr(a.alt||'')}" src="${escAttr(a.src||'')}" style="height:${hPx}; width:${wPx}" />`;
+      if (a.wrapAlign && a.wrapAlign !== 'none') {
+        return `${indent}<p style="text-align:${a.wrapAlign}">${imgTag.trimStart()}</p>`;
+      }
+      return imgTag;
+    }
+    case 'hr':
+      return `${indent}<hr />`;
+    case 'h': {
+      const level = el.level || 2;
+      const content = el.content || '';
+      return `${indent}<h${level}${styleAttr}>${content}</h${level}>`;
+    }
+    case 'br':
+      return `${indent}<p>&nbsp;</p>`;
+    case 'table': {
+      const a   = el.attrs || {};
+      const hs  = buildStyleStr(el.headerStyle || {});
+      const hsA = hs ? ` style="${hs}"` : '';
+      const tw  = buildStyleStr(el.styles || {});
+      const twA = tw ? ` style="${tw}"` : '';
+      const cols      = el.columns   || [];
+      const rows      = el.rows      || [];
+      const useHeader = el.useHeader !== false;
+      const caption   = el.caption   || '';
+      const sumAttr   = a.summary    ? ` summary="${escAttr(a.summary)}"` : '';
+      const i2 = indent + '    ';
+      const i3 = indent + '        ';
+      const i4 = indent + '            ';
+
+      const coverage = buildCoverageMap(rows);
+      const parts = [];
+      parts.push(`${indent}<table align="${a.align||'center'}" border="${a.border||'1'}" cellpadding="${a.cellpadding||'1'}" cellspacing="${a.cellspacing||'1'}"${twA}${sumAttr}>`);
+
+      if (caption) parts.push(`${i2}<caption>${caption}</caption>`);
+
+      if (useHeader && cols.length > 0) {
+        parts.push(`${i2}<thead>`, `${i3}<tr>`);
+        cols.forEach(col => parts.push(`${i4}<th scope="col"${hsA}>${col}</th>`));
+        parts.push(`${i3}</tr>`, `${i2}</thead>`);
+      }
+
+      if (rows.length > 0) {
+        parts.push(`${i2}<tbody>`);
+        rows.forEach((row, ri) => {
+          parts.push(`${i3}<tr>`);
+          cols.forEach((_, ci) => {
+            if (coverage[`${ri},${ci}`]) return; // spanned by another cell — skip
+            const c = normalizeCell(row && row[ci]);
+            const cellStyleParts = ['text-align:center'];
+            const cStyles = buildStyleStr(c.styles || {});
+            if (cStyles) cellStyleParts.push(cStyles);
+            const colspanAttr = c.colspan > 1 ? ` colspan="${c.colspan}"` : '';
+            const rowspanAttr = c.rowspan > 1 ? ` rowspan="${c.rowspan}"` : '';
+            parts.push(`${i4}<td style="${cellStyleParts.join('; ')}"${colspanAttr}${rowspanAttr}>${c.content}</td>`);
+          });
+          parts.push(`${i3}</tr>`);
+        });
+        parts.push(`${i2}</tbody>`);
+      }
+
+      parts.push(`${indent}</table>`);
+      return parts.join('\n');
+    }
+    case 'ul':
+    case 'ol': {
+      const tag = el.type;
+      const items = (el.content || '').split('\n').filter(Boolean);
+      const inner = items.map(item => `${indent}  <li>${item}</li>`).join('\n');
+      return `${indent}<${tag}${styleAttr}>\n${inner}\n${indent}</${tag}>`;
+    }
+    case 'badge': {
+      const sStr = buildStyleStr(el.styles || {});
+      const sA   = sStr ? ` style="${sStr}"` : '';
+      const tc   = (el.attrs && el.attrs.color) ? el.attrs.color : '#000000';
+      const txt  = el.content || '';
+      return `${indent}<div${sA}>\n${indent}<p><span style="color:${tc}"><strong>${txt}</strong></span></p>\n${indent}</div>`;
+    }
+    default:
+      return '';
+  }
+}
+
+function buildStyleStr(styles) {
+  return Object.entries(styles)
+    .filter(([, v]) => v !== '' && v !== null && v !== undefined)
+    .map(([k, v]) => `${k}: ${String(v).replace(/"/g, '&quot;')};`)
+    .join(' ');
+}
+
+function escAttr(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ══════════════════════════════════════════════
+//  RENDER ALL
+// ══════════════════════════════════════════════
+function renderAll() {
+  if (!_firstRender) isDirty = true;
+  _firstRender = false;
+  renderCanvas();
+  renderCode();
+  renderProperties();
+  updateTitle();
+}
+
+// ══════════════════════════════════════════════
+//  COPY
+// ══════════════════════════════════════════════
+function copyCode() {
+  const code = document.getElementById('code-area').value;
+  if (!code.trim()) return;
+  const btn = document.getElementById('copy-btn');
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = '✅ Kopiert!';
+    btn.classList.add('success');
+    setTimeout(() => {
+      btn.textContent = '📋 Code kopieren';
+      btn.classList.remove('success');
+    }, 2000);
+  }).catch(() => {
+    // Fallback
+    const ta = document.getElementById('code-area');
+    ta.select();
+    document.execCommand('copy');
+    btn.textContent = '✅ Kopiert!';
+    btn.classList.add('success');
+    setTimeout(() => { btn.textContent = '📋 Code kopieren'; btn.classList.remove('success'); }, 2000);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  PREVIEW  (Modal-Popup mit iframe)
+// ══════════════════════════════════════════════
+function previewCode() {
+  const code = document.getElementById('code-area').value;
+  if (!code.trim()) return;
+
+  const html = `<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>* { box-sizing: border-box; } body { margin: 0; padding: 0; }</style>
+</head>
+<body>${code}</body>
+</html>`;
+
+  const frame = document.getElementById('preview-iframe');
+  frame.srcdoc = html;
+  document.getElementById('preview-modal').classList.remove('hidden');
+}
+
+function closePreview() {
+  document.getElementById('preview-modal').classList.add('hidden');
+}
+
+function handleModalClick(e) {
+  if (e.target === document.getElementById('preview-modal')) closePreview();
+}
+
+// ══════════════════════════════════════════════
+//  TABLE EDITOR
+// ══════════════════════════════════════════════
+let tableEditId       = null;
+let captionRowVisible = false;
+let cellPropsVisible  = false; // true only after user clicks "Bearbeiten"
+
+// Open cell properties panel manually (via "Bearbeiten" button)
+function tblOpenCellProps() {
+  if (selectedCells.length === 0) {
+    // Nothing selected — show a brief hint on the button
+    const btn = document.getElementById('tbl-edit-cells-btn');
+    if (btn) { btn.textContent = '⚠ Zelle wählen'; setTimeout(() => { btn.textContent = '✏ Bearbeiten'; }, 1500); }
+    return;
+  }
+  cellPropsVisible = true;
+  updateEditBtnState();
+  renderCellProps();
+}
+
+// Close cell properties panel
+function tblCloseCellProps() {
+  cellPropsVisible = false;
+  updateEditBtnState();
+  const propsDiv = document.getElementById('table-cell-props');
+  if (propsDiv) propsDiv.style.display = 'none';
+}
+
+function updateEditBtnState() {
+  const btn = document.getElementById('tbl-edit-cells-btn');
+  if (!btn) return;
+  if (cellPropsVisible) {
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.color = '#c4b5fd';
+  } else {
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  }
+}
+
+function tblEdit(id) {
+  tableEditId = id || selectedId;
+  if (!tableEditId) return;
+  const el = findElement(tableEditId);
+  if (!el || el.type !== 'table') return;
+  selectedCells    = [];
+  lastAnchorCell   = null;
+  cellPropsVisible = false;
+  renderTableEditor();
+  document.getElementById('table-modal').classList.remove('hidden');
+}
+
+function closeTableModal() {
+  document.getElementById('table-modal').classList.add('hidden');
+  tableEditId      = null;
+  selectedCells    = [];
+  lastAnchorCell   = null;
+  cellPropsVisible = false;
+  renderAll(); // sync canvas/code with any changes
+}
+
+function handleTableModalClick(e) {
+  if (e.target === document.getElementById('table-modal')) closeTableModal();
+}
+
+function tblToggleCaption() {
+  captionRowVisible = !captionRowVisible;
+  const el = findElement(tableEditId);
+  const row = document.getElementById('table-caption-row');
+  if (!row) return;
+  row.style.display = captionRowVisible ? '' : 'none';
+  if (captionRowVisible && el) {
+    document.getElementById('table-caption-input').value = el.caption || '';
+    document.getElementById('tbl-use-header').checked = el.useHeader !== false;
+  }
+}
+
+function tblUpdateCaption(val) {
+  const el = findElement(tableEditId);
+  if (!el) return;
+  el.caption = val;
+  renderCode();
+}
+
+function tblToggleHeader(checked) {
+  const el = findElement(tableEditId);
+  if (!el) return;
+  el.useHeader = checked;
+  renderCode();
+  renderTableEditor();
+}
+
+// ─── Cell selection (single / Ctrl+click / Shift+click) ───
+function tblSelectCell(ri, ci, event) {
+  event && event.stopPropagation();
+
+  const ctrl  = event && (event.ctrlKey  || event.metaKey);
+  const shift = event && event.shiftKey;
+  const alreadyIdx = selectedCells.findIndex(c => c.ri === ri && c.ci === ci);
+
+  if (shift && lastAnchorCell) {
+    // Shift+click — range select, prevent focus change
+    event && event.preventDefault();
+    const minR = Math.min(lastAnchorCell.ri, ri);
+    const maxR = Math.max(lastAnchorCell.ri, ri);
+    const minC = Math.min(lastAnchorCell.ci, ci);
+    const maxC = Math.max(lastAnchorCell.ci, ci);
+    if (!ctrl) selectedCells = [];
+    for (let r = minR; r <= maxR; r++) {
+      for (let c = minC; c <= maxC; c++) {
+        if (!selectedCells.some(s => s.ri === r && s.ci === c)) {
+          selectedCells.push({ ri: r, ci: c });
+        }
+      }
+    }
+  } else if (ctrl) {
+    // Ctrl+click — toggle this cell, prevent focus change
+    event && event.preventDefault();
+    if (alreadyIdx >= 0) {
+      selectedCells.splice(alreadyIdx, 1);
+      if (lastAnchorCell && lastAnchorCell.ri === ri && lastAnchorCell.ci === ci) {
+        lastAnchorCell = selectedCells.length > 0 ? selectedCells[selectedCells.length - 1] : null;
+      }
+    } else {
+      selectedCells.push({ ri, ci });
+      lastAnchorCell = { ri, ci };
+    }
+  } else {
+    // Plain click — select only this cell, allow focus so user can type
+    selectedCells  = [{ ri, ci }];
+    lastAnchorCell = { ri, ci };
+  }
+
+  // Only update the panel if user already opened it — don't auto-open on selection
+  if (cellPropsVisible) renderCellProps();
+  renderTableEditorSelectionOnly();
+}
+
+// ─── onfocus fallback — fires for Tab-navigation (not for mouse clicks,
+//     because tblSelectCell already handled those via onclick) ───
+function tblFocusCell(ri, ci) {
+  // Ignore if click already handled selection (cell will be in selectedCells)
+  const alreadySelected = selectedCells.some(s => s.ri === ri && s.ci === ci);
+  if (!alreadySelected) {
+    // Tab-navigation into an unselected cell → silently select it
+    selectedCells  = [{ ri, ci }];
+    lastAnchorCell = { ri, ci };
+    if (cellPropsVisible) renderCellProps();
+    renderTableEditorSelectionOnly();
+  }
+}
+
+// ─── Multi-cell shared properties panel ───
+function renderMultiCellProps(propsDiv, el) {
+  // Collect common values across all selected cells
+  const cells = selectedCells
+    .map(({ri, ci}) => el.rows[ri] && el.rows[ri][ci] !== undefined ? normalizeCell(el.rows[ri][ci]) : null)
+    .filter(Boolean);
+
+  if (cells.length === 0) { propsDiv.style.display = 'none'; return; }
+
+  // Check if all selected cells share the same value for a prop
+  function common(fn) {
+    const vals = cells.map(fn);
+    return vals.every(v => v === vals[0]) ? vals[0] : null;
+  }
+
+  const bgCommon    = common(c => (c.styles && c.styles['background-color']) || '');
+  const colorCommon = common(c => (c.styles && c.styles['color'])            || '');
+  const alignCommon = common(c => (c.styles && c.styles['text-align'])       || 'center');
+  const boldCommon  = common(c => (c.styles && c.styles['font-weight'])      === 'bold' ? 'bold' : '');
+  const sizeCommon  = common(c => (c.styles && c.styles['font-size'])        || '');
+  const padCommon   = common(c => (c.styles && c.styles['padding'])          || '');
+
+  function toHex(v) {
+    if (!v) return '#000000';
+    if (/^#[0-9a-f]{6}$/i.test(v)) return v;
+    const m3 = v.match(/^#([0-9a-f]{3})$/i);
+    if (m3) return '#' + m3[1].split('').map(x=>x+x).join('');
+    const mRgb = v.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (mRgb) return '#' + [mRgb[1],mRgb[2],mRgb[3]].map(n=>parseInt(n).toString(16).padStart(2,'0')).join('');
+    return '#000000';
+  }
+
+  const mixed = `<span style="color:var(--text-muted);font-size:10px">(verschieden)</span>`;
+  const sep = `<div style="width:1px;background:var(--border2);align-self:stretch;margin:0 4px"></div>`;
+
+  propsDiv.style.display = '';
+  propsDiv.innerHTML = `
+    <div class="tbl-cell-props-bar" style="background:rgba(124,58,237,0.08);border-color:rgba(124,58,237,0.3)">
+      <div style="font-size:11px;color:#c4b5fd;font-weight:700;white-space:nowrap;padding:0 8px 0 0;border-right:1px solid var(--border2);margin-right:4px">
+        ✦ ${selectedCells.length} Zellen
+      </div>
+
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Ausrichtung</span>
+        <select class="tbl-mini-select" onchange="tblSetCellProp('text-align',this.value)">
+          <option value="" ${alignCommon===null?'selected':''}>—</option>
+          ${['left','center','right'].map(v=>`<option value="${v}"${alignCommon===v?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Schriftgr. (px)</span>
+        <input class="tbl-mini-input" type="number" min="8" max="72"
+          value="${sizeCommon !== null ? parseInt(sizeCommon)||'' : ''}"
+          placeholder="${sizeCommon===null?'–':''}"
+          oninput="tblSetCellProp('font-size', this.value ? this.value+'px' : '')">
+      </div>
+      <div class="tbl-prop-group" style="flex-direction:row;align-items:flex-end;gap:6px">
+        <label style="display:flex;flex-direction:column;gap:4px">
+          <span class="tbl-prop-label">Fett</span>
+          <input type="checkbox" style="accent-color:var(--accent);width:16px;height:16px;margin-bottom:4px;cursor:pointer"
+            ${boldCommon === 'bold' ? 'checked' : ''}
+            onchange="tblSetCellProp('font-weight',this.checked?'bold':'')">
+        </label>
+      </div>
+
+      ${sep}
+
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Hintergrund ${bgCommon===null?mixed:''}</span>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input class="tbl-mini-color" type="color" value="${toHex(bgCommon||'')}"
+            oninput="tblSetCellProp('background-color',this.value);this.nextElementSibling.value=this.value">
+          <input class="tbl-mini-input" style="width:100px" type="text"
+            value="${esc(bgCommon !== null ? bgCommon : '')}"
+            placeholder="${bgCommon===null?'(verschieden)':'leer = kein BG'}"
+            oninput="tblSetCellProp('background-color',this.value)">
+        </div>
+      </div>
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Textfarbe ${colorCommon===null?mixed:''}</span>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input class="tbl-mini-color" type="color" value="${toHex(colorCommon||'')}"
+            oninput="tblSetCellProp('color',this.value);this.nextElementSibling.value=this.value">
+          <input class="tbl-mini-input" style="width:100px" type="text"
+            value="${esc(colorCommon !== null ? colorCommon : '')}"
+            placeholder="${colorCommon===null?'(verschieden)':'leer = vererbt'}"
+            oninput="tblSetCellProp('color',this.value)">
+        </div>
+      </div>
+
+      ${sep}
+
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Innenabst. (px)</span>
+        <input class="tbl-mini-input" type="number" min="0"
+          value="${padCommon !== null ? parseInt(padCommon)||'' : ''}"
+          placeholder="${padCommon===null?'–':''}"
+          oninput="tblSetCellProp('padding', this.value ? this.value+'px' : '')">
+      </div>
+
+      <button class="tbl-del-btn" style="margin-left:auto;width:auto;padding:0 10px;font-size:11px"
+        title="Panel schließen" onclick="tblCloseCellProps();renderTableEditorSelectionOnly()">
+        ✕ Schließen
+      </button>
+    </div>`;
+}
+
+function renderCellProps() {
+  const propsDiv = document.getElementById('table-cell-props');
+  if (!propsDiv) return;
+  // Only show if user explicitly opened the panel via "Bearbeiten"
+  if (!cellPropsVisible || selectedCells.length === 0 || !tableEditId) {
+    propsDiv.style.display = 'none';
+    return;
+  }
+  const el = findElement(tableEditId);
+  if (!el) { propsDiv.style.display = 'none'; return; }
+
+  // For multi-cell: show a shared editor panel
+  if (selectedCells.length > 1) {
+    renderMultiCellProps(propsDiv, el);
+    return;
+  }
+
+  // Single cell — use the primary (last) selected
+  const { ri, ci } = selectedCells[0];
+  if (!el.rows[ri] || el.rows[ri][ci] === undefined) { propsDiv.style.display = 'none'; return; }
+
+  const c = normalizeCell(el.rows[ri][ci]);
+  const bgVal    = (c.styles && c.styles['background-color']) || '';
+  const alignVal = (c.styles && c.styles['text-align'])       || 'center';
+  const colorVal = (c.styles && c.styles['color'])            || '';
+  const boldVal  = (c.styles && c.styles['font-weight'])      === 'bold';
+  const sizeVal  = (c.styles && c.styles['font-size'])        || '';
+  const paddingVal = (c.styles && c.styles['padding'])        || '';
+
+  // Best-effort hex conversion for color picker (handles #rrggbb, rgb(), rgba())
+  function toHex(v) {
+    if (!v) return '#000000';
+    const m6 = v.match(/^#([0-9a-f]{6})$/i);
+    if (m6) return v;
+    const m3 = v.match(/^#([0-9a-f]{3})$/i);
+    if (m3) return '#' + m3[1].split('').map(x=>x+x).join('');
+    const mRgb = v.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (mRgb) return '#' + [mRgb[1],mRgb[2],mRgb[3]].map(n=>parseInt(n).toString(16).padStart(2,'0')).join('');
+    return '#000000';
+  }
+
+  // Separator helper
+  const sep = `<div style="width:1px;background:var(--border2);align-self:stretch;margin:0 4px"></div>`;
+
+  propsDiv.style.display = '';
+  propsDiv.innerHTML = `
+    <div class="tbl-cell-props-bar">
+      <div style="font-size:11px;color:#7dd3fc;font-weight:700;white-space:nowrap;padding:0 6px 0 0;border-right:1px solid var(--border2);margin-right:4px">
+        ✦ Z${ri+1} / S${ci+1}
+      </div>
+
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Colspan</span>
+        <input class="tbl-mini-input" type="number" min="1" max="20" value="${c.colspan}"
+          onchange="tblSetCellProp('colspan',this.value)">
+      </div>
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Rowspan</span>
+        <input class="tbl-mini-input" type="number" min="1" max="20" value="${c.rowspan}"
+          onchange="tblSetCellProp('rowspan',this.value)">
+      </div>
+
+      ${sep}
+
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Ausrichtung</span>
+        <select class="tbl-mini-select" onchange="tblSetCellProp('text-align',this.value)">
+          ${['left','center','right'].map(v=>`<option value="${v}"${alignVal===v?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Schriftgr. (px)</span>
+        <input class="tbl-mini-input" type="number" min="8" max="72" value="${parseInt(sizeVal)||''}"
+          placeholder="—" oninput="tblSetCellProp('font-size', this.value ? this.value+'px' : '')">
+      </div>
+      <div class="tbl-prop-group" style="flex-direction:row;align-items:flex-end;gap:6px">
+        <label style="display:flex;flex-direction:column;gap:4px">
+          <span class="tbl-prop-label">Fett</span>
+          <input type="checkbox" style="accent-color:var(--accent);width:16px;height:16px;margin-bottom:4px;cursor:pointer"
+            ${boldVal ? 'checked' : ''}
+            onchange="tblSetCellProp('font-weight',this.checked?'bold':'')">
+        </label>
+      </div>
+
+      ${sep}
+
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Hintergrund</span>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input class="tbl-mini-color" type="color" value="${toHex(bgVal)}"
+            oninput="tblSetCellProp('background-color',this.value);this.nextElementSibling.value=this.value">
+          <input class="tbl-mini-input" style="width:100px" type="text" value="${esc(bgVal)}"
+            placeholder="leer = kein BG" oninput="tblSetCellProp('background-color',this.value)">
+        </div>
+      </div>
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Textfarbe</span>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input class="tbl-mini-color" type="color" value="${toHex(colorVal)}"
+            oninput="tblSetCellProp('color',this.value);this.nextElementSibling.value=this.value">
+          <input class="tbl-mini-input" style="width:100px" type="text" value="${esc(colorVal)}"
+            placeholder="leer = vererbt" oninput="tblSetCellProp('color',this.value)">
+        </div>
+      </div>
+
+      ${sep}
+
+      <div class="tbl-prop-group">
+        <span class="tbl-prop-label">Innenabst. (px)</span>
+        <input class="tbl-mini-input" type="number" min="0" value="${parseInt(paddingVal)||''}"
+          placeholder="—" oninput="tblSetCellProp('padding', this.value ? this.value+'px' : '')">
+      </div>
+    </div>`;
+}
+
+function tblSetCellProp(prop, value) {
+  if (selectedCells.length === 0 || !tableEditId) return;
+  const el = findElement(tableEditId);
+  if (!el) return;
+
+  const isStructural = prop === 'colspan' || prop === 'rowspan';
+
+  // For structural props, only apply to single-cell selections
+  const targets = isStructural ? selectedCells.slice(0, 1) : selectedCells;
+
+  targets.forEach(({ ri, ci }) => {
+    if (!el.rows[ri]) return;
+    el.rows[ri][ci] = normalizeCell(el.rows[ri][ci]);
+    const c = el.rows[ri][ci];
+    if (prop === 'colspan' || prop === 'rowspan') {
+      c[prop] = Math.max(1, parseInt(value) || 1);
+    } else {
+      if (!c.styles) c.styles = {};
+      if (value === '' || value === null || value === undefined) {
+        delete c.styles[prop];
+      } else {
+        c.styles[prop] = value;
+      }
+    }
+  });
+
+  renderCode();
+  if (isStructural) {
+    renderTableEditor(); // structural: full rebuild
+  } else {
+    renderTableEditorSelectionOnly(); // style: live DOM update, no rebuild
+  }
+}
+
+// Re-renders only cell selection outlines + live styles without rebuilding all inputs
+function renderTableEditorSelectionOnly() {
+  if (!tableEditId) return;
+  const tblEl = findElement(tableEditId);
+  if (!tblEl) return;
+
+  const wraps = document.querySelectorAll('#table-editor-body .tbl-cell-wrap');
+  wraps.forEach(wrap => {
+    const r = parseInt(wrap.dataset.ri);
+    const c = parseInt(wrap.dataset.ci);
+
+    // Selection outline — all selected cells
+    if (selectedCells.some(s => s.ri === r && s.ci === c)) {
+      wrap.classList.add('selected');
+    } else {
+      wrap.classList.remove('selected');
+    }
+
+    if (!tblEl.rows[r]) return;
+    const cell = normalizeCell(tblEl.rows[r][c]);
+
+    // Span badge
+    const badge = wrap.querySelector('.tbl-cell-span-badge');
+    if (badge) {
+      if (cell.colspan > 1 || cell.rowspan > 1) {
+        badge.textContent = `${cell.colspan}×${cell.rowspan}`;
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // Live style feedback on the parent TD
+    const td = wrap.closest('td');
+    if (td) {
+      td.style.background  = (cell.styles && cell.styles['background-color']) || '';
+      td.style.padding     = (cell.styles && cell.styles['padding'])           || '';
+    }
+
+    // Live style feedback on the text input inside this cell
+    const input = wrap.querySelector('.tbl-cell-input');
+    if (input) {
+      input.style.color      = (cell.styles && cell.styles['color'])       || '';
+      input.style.fontWeight = (cell.styles && cell.styles['font-weight']) || '';
+      input.style.fontSize   = (cell.styles && cell.styles['font-size'])   || '';
+    }
+  });
+}
+
+function renderTableEditor() {
+  const el = findElement(tableEditId);
+  if (!el) return;
+  const cols    = el.columns   || [];
+  const rows    = el.rows      || [];
+  const useHead = el.useHeader !== false;
+  const coverage = buildCoverageMap(rows);
+
+  let html = `<div class="table-editor-wrap"><table>`;
+
+  // Header row (column name inputs)
+  if (useHead) {
+    html += `<thead><tr>`;
+    cols.forEach((col, ci) => {
+      html += `<th>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:center">
+          <input class="tbl-head-input" value="${esc(col)}"
+            oninput="tblUpdateCol(${ci},this.value)"
+            placeholder="Spalte ${ci+1}">
+          <button class="tbl-del-btn" onclick="tblRemoveCol(${ci})" title="Spalte löschen">🗑</button>
+        </div>
+      </th>`;
+    });
+    html += `<th style="width:30px"></th></tr></thead>`;
+  } else {
+    // No header — just show column delete buttons
+    html += `<thead><tr>`;
+    cols.forEach((col, ci) => {
+      html += `<th style="text-align:center;padding-bottom:4px">
+        <span style="font-size:10px;color:var(--text-muted)">S${ci+1}</span>
+        <button class="tbl-del-btn" style="margin-left:4px;display:inline-flex" onclick="tblRemoveCol(${ci})" title="Spalte löschen">🗑</button>
+      </th>`;
+    });
+    html += `<th style="width:30px"></th></tr></thead>`;
+  }
+
+  // Body rows
+  html += `<tbody>`;
+  if (rows.length === 0) {
+    html += `<tr><td colspan="${cols.length + 1}" style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px">
+      Noch keine Zeilen. Klicke auf "+ Zeile".
+    </td></tr>`;
+  }
+  rows.forEach((row, ri) => {
+    html += `<tr>`;
+    cols.forEach((_, ci) => {
+      if (coverage[`${ri},${ci}`]) {
+        // Covered by a spanning cell — show a greyed-out placeholder
+        html += `<td style="background:rgba(0,0,0,0.25);border:1px dashed rgba(255,255,255,0.1);vertical-align:middle;text-align:center">
+          <span style="font-size:10px;color:var(--text-muted);user-select:none">↗ verbunden</span>
+        </td>`;
+        return;
+      }
+      const c = normalizeCell(row && row[ci]);
+      const isSel = selectedCells.some(s => s.ri === ri && s.ci === ci);
+      const hasMerge = c.colspan > 1 || c.rowspan > 1;
+      const colspanAttr = c.colspan > 1 ? ` colspan="${c.colspan}"` : '';
+      const rowspanAttr = c.rowspan > 1 ? ` rowspan="${c.rowspan}"` : '';
+      const bgStyle = c.styles && c.styles['background-color'] ? `background:${c.styles['background-color']};` : '';
+      html += `<td${colspanAttr}${rowspanAttr} style="vertical-align:top;${bgStyle}">
+        <div class="tbl-cell-wrap${isSel ? ' selected' : ''}"
+             data-ri="${ri}" data-ci="${ci}"
+             onclick="tblSelectCell(${ri},${ci},event)">
+          <input class="tbl-cell-input" value="${esc(c.content)}"
+            onmousedown="if(event.ctrlKey||event.metaKey||event.shiftKey)event.preventDefault()"
+            onclick="tblSelectCell(${ri},${ci},event)"
+            onfocus="tblFocusCell(${ri},${ci})"
+            oninput="tblUpdateCell(${ri},${ci},this.value)"
+            placeholder="…">
+          ${hasMerge ? `<span class="tbl-cell-span-badge">${c.colspan}×${c.rowspan}</span>` : `<span class="tbl-cell-span-badge" style="display:none">${c.colspan}×${c.rowspan}</span>`}
+        </div>
+      </td>`;
+    });
+    html += `<td style="vertical-align:middle"><button class="tbl-del-btn" onclick="tblRemoveRow(${ri})" title="Zeile löschen">🗑</button></td>`;
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  // Hint bar below table
+  const totalCells = rows.reduce((n, row) => n + row.filter((_, ci) => !coverage[`${rows.indexOf(row)},${ci}`]).length, 0);
+  html += `<div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span style="font-size:11px;color:var(--text-muted)">
+      🖱 Klick = auswählen · <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:10px">Ctrl</kbd>+Klick = mehrere ·
+      <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:10px">Shift</kbd>+Klick = Bereich
+    </span>
+    <button class="tbl-add-btn" style="margin-left:auto;font-size:11px"
+      onclick="tblSelectAll()">Alle auswählen</button>
+    ${selectedCells.length > 0 ? `<button class="tbl-del-btn" style="width:auto;padding:0 10px;font-size:11px"
+      onclick="selectedCells=[];lastAnchorCell=null;tblCloseCellProps();renderTableEditorSelectionOnly()">✕ Auswahl</button>` : ''}
+  </div>`;
+
+  document.getElementById('table-editor-body').innerHTML = html;
+  renderCellProps();
+}
+
+// Cell/column value updates — only refresh code, keep modal open
+function tblUpdateCol(ci, val) {
+  const el = findElement(tableEditId);
+  if (!el) return;
+  el.columns[ci] = val;
+  renderCode();
+}
+
+function tblUpdateCell(ri, ci, val) {
+  const el = findElement(tableEditId);
+  if (!el) return;
+  if (!el.rows[ri]) el.rows[ri] = [];
+  el.rows[ri][ci] = normalizeCell(el.rows[ri][ci]);
+  el.rows[ri][ci].content = val;
+  renderCode();
+}
+
+// Structural changes → re-render editor
+function tblAddCol() {
+  const el = findElement(tableEditId);
+  if (!el) return;
+  el.columns.push('Neue Spalte');
+  el.rows = el.rows.map(row => [...row, {content:'', colspan:1, rowspan:1, styles:{}}]);
+  // Keep selection as-is (new column won't be in selectedCells)
+  renderCode();
+  renderTableEditor();
+}
+
+function tblRemoveCol(ci) {
+  const el = findElement(tableEditId);
+  if (!el || el.columns.length <= 1) return;
+  el.columns.splice(ci, 1);
+  el.rows = el.rows.map(row => row.filter((_, i) => i !== ci));
+  selectedCells = selectedCells.filter(c => c.ci !== ci).map(c => c.ci > ci ? {...c, ci: c.ci - 1} : c);
+  if (selectedCells.length === 0) lastAnchorCell = null;
+  renderCode();
+  renderTableEditor();
+}
+
+function tblAddRow() {
+  const el = findElement(tableEditId);
+  if (!el) return;
+  el.rows.push(el.columns.map(() => ({content:'', colspan:1, rowspan:1, styles:{}})));
+  renderCode();
+  renderTableEditor();
+}
+
+function tblRemoveRow(ri) {
+  const el = findElement(tableEditId);
+  if (!el) return;
+  el.rows.splice(ri, 1);
+  selectedCells  = selectedCells.filter(c => c.ri !== ri).map(c => c.ri > ri ? {...c, ri: c.ri - 1} : c);
+  if (selectedCells.length === 0) lastAnchorCell = null;
+  renderCode();
+  renderTableEditor();
+}
+
+function tblSelectAll() {
+  const el = findElement(tableEditId);
+  if (!el) return;
+  const coverage = buildCoverageMap(el.rows);
+  selectedCells = [];
+  el.rows.forEach((row, ri) => {
+    (el.columns || []).forEach((_, ci) => {
+      if (!coverage[`${ri},${ci}`]) selectedCells.push({ ri, ci });
+    });
+  });
+  lastAnchorCell = selectedCells.length > 0 ? selectedCells[0] : null;
+  renderCellProps();
+  renderTableEditorSelectionOnly();
+}
+
+// ══════════════════════════════════════════════
+//  DRAG & DROP
+// ══════════════════════════════════════════════
+function onDragStart(id, e) {
+  dragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+  document.body.classList.add('drag-active');
+  // Delay so the ghost image shows the non-faded version
+  setTimeout(() => {
+    document.querySelectorAll(`[data-id="${id}"]`).forEach(el => el.classList.add('dragging'));
+  }, 0);
+}
+
+function onDragEnd(e) {
+  dragId = null;
+  document.body.classList.remove('drag-active');
+  document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+  document.querySelectorAll('.drop-zone.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+
+function dzOver(zone) {
+  // Clear all other highlighted zones first
+  document.querySelectorAll('.drop-zone.drag-over').forEach(el => el.classList.remove('drag-over'));
+  zone.classList.add('drag-over');
+}
+
+function dzLeave(zone) {
+  zone.classList.remove('drag-over');
+}
+
+function dzDrop(e, zone) {
+  const afterId  = zone.dataset.after;   // '' = insert at beginning of parent
+  const parentId = zone.dataset.parent;  // 'root' or a div's id
+  dropToZone(dragId, afterId, parentId);
+}
+
+function dropToZone(srcId, afterId, parentId) {
+  if (!srcId) return;
+
+  const dragged = findElement(srcId);
+  if (!dragged) return;
+
+  // Prevent dropping into self or own descendants
+  const realParent = (parentId === 'root' || !parentId) ? null : parentId;
+  if (realParent) {
+    if (realParent === srcId) return;                                       // drop into self
+    if (dragged.children && isInTree(realParent, dragged.children)) return; // drop into own child
+  }
+  if (afterId && afterId === srcId) return; // drop directly after itself = no visible change
+
+  // Remove from current position (BEFORE finding the target array, order matters!)
+  removeElement(srcId);
+
+  // Get the target siblings array
+  const targetArr = realParent
+    ? (findElement(realParent)?.children ?? elements)
+    : elements;
+
+  // Insert at the right position
+  if (!afterId) {
+    targetArr.unshift(dragged);                           // → top of list
+  } else {
+    const idx = targetArr.findIndex(e => e.id === afterId);
+    targetArr.splice(idx === -1 ? targetArr.length : idx + 1, 0, dragged);
+  }
+
+  dragId = null;
+  document.body.classList.remove('drag-active');
+  renderAll();
+}
+
+// Check if `id` exists anywhere in `tree`
+function isInTree(id, tree) {
+  for (const el of tree) {
+    if (el.id === id) return true;
+    if (el.children && isInTree(id, el.children)) return true;
+  }
+  return false;
+}
+
+// ══════════════════════════════════════════════
+//  IMPORT
+// ══════════════════════════════════════════════
+function openImport() {
+  document.getElementById('import-textarea').value = '';
+  document.getElementById('import-error').style.display = 'none';
+  document.getElementById('import-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('import-textarea').focus(), 50);
+}
+
+function closeImport() {
+  document.getElementById('import-modal').classList.add('hidden');
+}
+
+function handleImportModalClick(e) {
+  if (e.target === document.getElementById('import-modal')) closeImport();
+}
+
+function doImport(mode) {
+  const html = document.getElementById('import-textarea').value.trim();
+  const errEl = document.getElementById('import-error');
+  errEl.style.display = 'none';
+
+  if (!html) { errEl.textContent = 'Bitte füge zuerst HTML-Code ein.'; errEl.style.display = ''; return; }
+
+  let parsed;
+  try {
+    parsed = parseHTMLToElements(html);
+  } catch(e) {
+    errEl.textContent = 'Fehler beim Parsen: ' + e.message;
+    errEl.style.display = '';
+    return;
+  }
+
+  if (!parsed.length) {
+    errEl.textContent = 'Keine unterstützten Elemente gefunden. Unterstützt: <div>, <p>, <img>, <hr>, <h1>–<h6>, <ul>, <ol>, <table>.';
+    errEl.style.display = '';
+    return;
+  }
+
+  if (mode === 'replace') {
+    if (elements.length && !confirm('Das bestehende Dokument wird ersetzt. Fortfahren?')) return;
+    elements = parsed;
+    selectedId = null;
+    contextId = null;
+    updateContextBar();
+  } else {
+    elements.push(...parsed);
+  }
+
+  closeImport();
+  renderAll();
+}
+
+// ── Parser: HTML-String → Element-Baum ──────
+function parseHTMLToElements(htmlStr) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlStr, 'text/html');
+  return Array.from(doc.body.childNodes)
+    .map(domToEl)
+    .filter(Boolean);
+}
+
+function domToEl(node) {
+  // Only process element nodes
+  if (node.nodeType !== 1) return null;
+  const tag = node.tagName.toLowerCase();
+
+  switch (tag) {
+    case 'div': {
+      const el = makeElement('div');
+      el.styles = parseStyleStr(node.getAttribute('style') || '');
+      el.children = Array.from(node.childNodes).map(domToEl).filter(Boolean);
+      return el;
+    }
+
+    case 'p': {
+      // Spacer: <p> whose only content is &nbsp; / whitespace
+      const isSpacerText = node.childNodes.length === 1
+        && node.childNodes[0].nodeType === 3
+        && /^[ \s]*$/.test(node.childNodes[0].textContent);
+      const isEmpty = node.childNodes.length === 0;
+      if (isSpacerText || isEmpty) return makeElement('br');
+
+      // Image wrapper: <p style="text-align:center"><img .../></p>
+      const realChildren = Array.from(node.childNodes).filter(
+        n => !(n.nodeType === 3 && n.textContent.trim() === '')
+      );
+      if (realChildren.length === 1 && realChildren[0].tagName && realChildren[0].tagName.toLowerCase() === 'img') {
+        const imgEl = domToEl(realChildren[0]);
+        if (imgEl) {
+          const pStyles = parseStyleStr(node.getAttribute('style') || '');
+          imgEl.attrs.wrapAlign = pStyles['text-align'] || 'center';
+          return imgEl;
+        }
+      }
+
+      // Normal paragraph
+      const el = makeElement('p');
+      el.styles = parseStyleStr(node.getAttribute('style') || '');
+      el.content = node.innerHTML;
+      return el;
+    }
+
+    case 'img': {
+      const el = makeElement('img');
+      el.attrs.src = node.getAttribute('src') || '';
+      el.attrs.alt = node.getAttribute('alt') || '';
+      // Parse dimensions from style attribute (e.g. style="height:168px; width:900px")
+      const imgStyles = parseStyleStr(node.getAttribute('style') || '');
+      if (imgStyles['width'])  el.attrs.width  = String(parseInt(imgStyles['width'])  || '') ;
+      if (imgStyles['height']) el.attrs.height = String(parseInt(imgStyles['height']) || '');
+      // Also check plain HTML attrs as fallback
+      if (!el.attrs.width  && node.getAttribute('width'))  el.attrs.width  = node.getAttribute('width');
+      if (!el.attrs.height && node.getAttribute('height')) el.attrs.height = node.getAttribute('height');
+      el.attrs.wrapAlign = 'none'; // standalone; parent <p> handler overrides if needed
+      return el;
+    }
+
+    case 'hr':
+      return makeElement('hr');
+
+    case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6': {
+      const el = makeElement('h');
+      el.level   = parseInt(tag[1]);
+      el.styles  = parseStyleStr(node.getAttribute('style') || '');
+      el.content = node.innerHTML;
+      return el;
+    }
+
+    case 'ul':
+    case 'ol': {
+      const el = makeElement(tag);
+      el.styles = parseStyleStr(node.getAttribute('style') || '');
+      const liNodes = Array.from(node.querySelectorAll(':scope > li'));
+      el.content = liNodes.map(li => li.innerHTML.trim()).join('\n');
+      return el;
+    }
+
+    case 'table': {
+      const el = makeElement('table');
+      el.attrs.align       = node.getAttribute('align')       || 'center';
+      el.attrs.border      = node.getAttribute('border')      || '1';
+      el.attrs.cellpadding = node.getAttribute('cellpadding') || '1';
+      el.attrs.cellspacing = node.getAttribute('cellspacing') || '1';
+      if (node.getAttribute('summary')) el.attrs.summary = node.getAttribute('summary');
+      const tblStyle = parseStyleStr(node.getAttribute('style') || '');
+      if (tblStyle.width) el.styles.width = tblStyle.width;
+
+      // Caption
+      const captionEl = node.querySelector('caption');
+      if (captionEl) el.caption = captionEl.innerHTML.trim();
+
+      // Columns from thead th
+      const theadThs = node.querySelectorAll('thead th');
+      if (theadThs.length > 0) {
+        el.useHeader = true;
+        el.columns = Array.from(theadThs).map(th => th.textContent.trim());
+        const firstThStyle = parseStyleStr(theadThs[0].getAttribute('style') || '');
+        if (Object.keys(firstThStyle).length) el.headerStyle = firstThStyle;
+      } else {
+        // No thead — detect columns from first body row
+        el.useHeader = false;
+        const firstTr = node.querySelector('tr');
+        if (firstTr) {
+          const firstCells = firstTr.querySelectorAll('td,th');
+          const numCols = Array.from(firstCells).reduce((n, td) => n + (parseInt(td.getAttribute('colspan'))||1), 0);
+          el.columns = Array.from({length: numCols}, (_, i) => `Spalte ${i+1}`);
+        }
+      }
+
+      // Body rows — preserve colspan/rowspan and per-cell styles
+      // Avoid double-counting: if there's a tbody, use its trs
+      const tbody = node.querySelector('tbody');
+      const trList = tbody
+        ? Array.from(tbody.querySelectorAll('tr'))
+        : Array.from(node.querySelectorAll('tr')).filter(tr => !tr.closest('thead') && !tr.closest('tfoot'));
+
+      el.rows = trList.map(tr => {
+        const numCols = (el.columns || []).length || 3;
+        // Build a cell array sized to columns, fill from td elements
+        const tds = Array.from(tr.querySelectorAll('td'));
+        return tds.map(td => {
+          const cs = parseInt(td.getAttribute('colspan')) || 1;
+          const rs = parseInt(td.getAttribute('rowspan')) || 1;
+          const tdStyles = parseStyleStr(td.getAttribute('style') || '');
+          // Exclude text-align:center from per-cell styles (it's the default)
+          if (tdStyles['text-align'] === 'center') delete tdStyles['text-align'];
+          return {
+            content: td.innerHTML.trim(),
+            colspan: cs,
+            rowspan: rs,
+            styles:  Object.keys(tdStyles).length ? tdStyles : {}
+          };
+        });
+      });
+
+      // Ensure columns array is big enough
+      if (!el.columns || el.columns.length === 0) {
+        const maxCells = el.rows.reduce((m, r) => Math.max(m, r.length), 0);
+        el.columns = Array.from({length: maxCells}, (_, i) => `Spalte ${i+1}`);
+      }
+
+      return el;
+    }
+
+    default:
+      return null; // skip unknown tags
+  }
+}
+
+// Parse "color: red; padding: 10px;" → { color: 'red', padding: '10px' }
+// Handles multi-colon values like url("https://...") correctly
+function parseStyleStr(styleStr) {
+  if (!styleStr.trim()) return {};
+  const styles = {};
+  // Split carefully: semicolons inside url(...) must not split
+  let depth = 0;
+  let current = '';
+  for (const ch of styleStr) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    if (ch === ';' && depth === 0) {
+      processDeclaration(current.trim(), styles);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  if (current.trim()) processDeclaration(current.trim(), styles);
+  return styles;
+}
+
+function processDeclaration(decl, styles) {
+  const idx = decl.indexOf(':');
+  if (idx === -1) return;
+  const key = decl.slice(0, idx).trim();
+  const val = decl.slice(idx + 1).trim();
+  if (key && val) styles[key] = val;
+}
+
+// ══════════════════════════════════════════════
+//  PROJECT: SAVE / LOAD / AUTOSAVE
+// ══════════════════════════════════════════════
+function updateTitle() {
+  const file = currentFilePath
+    ? currentFilePath.split(/[\\/]/).pop().replace(/\.htmlbuilder$/, '')
+    : null;
+  const dot = isDirty ? ' •' : '';
+  document.title = file ? `${file}${dot} — HTML Builder` : `HTML Builder${dot}`;
+}
+
+function updateSaveStatus(msg) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 3000);
+}
+
+async function saveProject() {
+  if (!window.electronAPI?.isElectron) return;
+  const defaultName = currentFilePath || 'projekt.htmlbuilder';
+  const { canceled, filePath } = await window.electronAPI.saveProject(defaultName);
+  if (canceled || !filePath) return;
+  await window.electronAPI.writeFile(filePath, JSON.stringify({ version: 1, elements, idCounter }, null, 2));
+  currentFilePath = filePath;
+  isDirty = false;
+  updateTitle();
+  updateSaveStatus('✓ Gespeichert');
+}
+
+async function loadProject() {
+  if (!window.electronAPI?.isElectron) return;
+  const { canceled, filePaths } = await window.electronAPI.openProject();
+  if (canceled || !filePaths?.length) return;
+  try {
+    const { content } = await window.electronAPI.readFile(filePaths[0]);
+    const data = JSON.parse(content);
+    elements = data.elements || [];
+    idCounter = data.idCounter || 0;
+    currentFilePath = filePaths[0];
+    selectedId = null;
+    contextId = null;
+    updateContextBar();
+    renderAll();
+    isDirty = false;
+    updateTitle();
+    updateSaveStatus('✓ Geladen');
+  } catch(e) {
+    alert('Fehler beim Laden: ' + e.message);
+  }
+}
+
+async function doAutosave() {
+  if (!autosavePath || !elements.length) return;
+  try {
+    await window.electronAPI.writeFile(
+      autosavePath,
+      JSON.stringify({ version: 1, elements, idCounter, savedAt: new Date().toISOString() })
+    );
+    updateSaveStatus('↺ Autosave ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
+  } catch(e) { /* silent */ }
+}
+
+async function initProjectSystem() {
+  if (!window.electronAPI?.isElectron) return;
+  const dataPath = await window.electronAPI.getDataPath();
+  autosavePath = dataPath + '\\autosave.htmlbuilder';
+
+  try {
+    const { content } = await window.electronAPI.readFile(autosavePath);
+    const data = JSON.parse(content);
+    if (data.elements?.length) {
+      const when = data.savedAt
+        ? new Date(data.savedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })
+        : 'unbekannt';
+      const response = await window.electronAPI.showQuestion(
+        'Wiederherstellung',
+        `Ungespeicherte Arbeit vom ${when} gefunden.\nMöchtest du diese wiederherstellen?`,
+        ['Ja, wiederherstellen', 'Nein, verwerfen']
+      );
+      if (response === 0) {
+        elements = data.elements;
+        idCounter = data.idCounter || 0;
+        selectedId = null;
+        contextId = null;
+        updateContextBar();
+        renderAll();
+        updateSaveStatus('↺ Wiederhergestellt');
+      }
+    }
+  } catch(e) { /* kein Autosave vorhanden */ }
+
+  setInterval(doAutosave, 30_000);
+}
+
+// ══════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveProject();
+    return;
+  }
+  if (e.key === 'Escape') {
+    if (!document.getElementById('table-modal').classList.contains('hidden')) {
+      closeTableModal();
+    } else if (!document.getElementById('import-modal').classList.contains('hidden')) {
+      closeImport();
+    } else if (!document.getElementById('preview-modal').classList.contains('hidden')) {
+      closePreview();
+    } else if (selectedId) {
+      selectedId = null;
+      renderAll();
+    } else if (contextId) {
+      exitContext();
+    }
+  }
+  if (e.key === 'Delete' && selectedId) {
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
+    deleteElement(selectedId);
+  }
+});
+
+// ══════════════════════════════════════════════
+//  AUTO-UPDATER
+// ══════════════════════════════════════════════
+let _updateReady = false;
+
+function initUpdater() {
+  if (!window.electronAPI?.isElectron) return;
+
+  window.electronAPI.onUpdateAvailable((info) => {
+    const bar  = document.getElementById('update-bar');
+    const text = document.getElementById('update-text');
+    const btn  = document.getElementById('update-btn');
+    const prog = document.getElementById('update-progress');
+    text.textContent = `⬇ Update v${info.version} verfügbar`;
+    btn.textContent  = 'Herunterladen';
+    btn.style.display = '';
+    prog.style.display = 'none';
+    bar.classList.add('show');
+    window.electronAPI.downloadUpdate();
+    btn.style.display = 'none';
+    text.textContent = `⬇ Update v${info.version} wird heruntergeladen…`;
+    prog.style.display = '';
+  });
+
+  window.electronAPI.onUpdateProgress((data) => {
+    document.getElementById('update-progress-fill').style.width = data.percent + '%';
+    document.getElementById('update-text').textContent =
+      `⬇ Update wird heruntergeladen… ${data.percent}%`;
+  });
+
+  window.electronAPI.onUpdateReady(() => {
+    _updateReady = true;
+    const text = document.getElementById('update-text');
+    const btn  = document.getElementById('update-btn');
+    const prog = document.getElementById('update-progress');
+    text.textContent  = '✅ Update heruntergeladen — App neu starten zum Installieren';
+    btn.textContent   = 'Jetzt neu starten';
+    btn.style.display = '';
+    prog.style.display = 'none';
+  });
+}
+
+function handleUpdateBtn() {
+  if (_updateReady) window.electronAPI.installUpdate();
+}
+
+// Init
+renderAll();
+initProjectSystem();
+initUpdater();
+</script>
+</body>
+</html>

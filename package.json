@@ -1,0 +1,41 @@
+{
+  "name": "html-builder",
+  "version": "1.1.0",
+  "description": "Visueller HTML-Code-Generator",
+  "main": "main.js",
+  "author": "Sven Kadereit",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "publish": "electron-builder --win --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^42.3.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "de.sven-kadereit.html-builder",
+    "productName": "HTML Builder",
+    "files": ["index.html", "main.js", "preload.js"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "HTML Builder"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Xh3ll",
+      "repo": "html-builder"
+    },
+    "directories": { "output": "dist" }
+  }
+}
